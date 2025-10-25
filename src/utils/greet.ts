@@ -7,14 +7,14 @@ import { getPublishDate } from "@finsweet/ts-utils";
 export const greetUser = (name: string) => {
 	const publishDate = getPublishDate();
 
-	console.log(`Hello ${name}!`);
+	console.log(`testttt ${name}!`);
 	console.log(
-		`heyyy world This site was last published on ${publishDate?.toLocaleDateString(
+		`heyyy world This site was last published ${name} on ${publishDate?.toLocaleDateString(
 			"en-US",
 			{
-				year: "numeric",
-				month: "long",
 				day: "2-digit",
+				month: "long",
+				year: "numeric",
 			},
 		)}.`,
 	);
