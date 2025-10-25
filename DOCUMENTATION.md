@@ -34,7 +34,7 @@ This codebase serves as a development framework for building scripts that will b
 - **Hot Reload Development**: Instant browser refresh on file changes
 - **Production Optimization**: Minified, bundled output for production
 - **Path Aliases**: Clean import statements using custom path aliases
-- **Quality Assurance**: Integrated linting (ESLint, Biome), formatting (Prettier), and type checking
+- **Quality Assurance**: Integrated linting and formatting with Biome, plus TypeScript type checking
 - **End-to-End Testing**: Playwright integration for browser testing
 - **Webflow Integration**: Built-in patterns for Webflow API interaction
 
@@ -48,9 +48,7 @@ This codebase serves as a development framework for building scripts that will b
 |------|---------|---------|
 | **TypeScript** | Type-safe JavaScript development | ^5.7.3 |
 | **esbuild** | Ultra-fast JavaScript bundler | ^0.24.2 |
-| **ESLint** | Code linting and style enforcement | ^9.19.0 |
-| **Biome** | Fast, modern formatter and linter | 2.2.6 |
-| **Prettier** | Code formatting | ^3.4.2 |
+| **Biome** | Fast, all-in-one formatter and linter | 2.2.6 |
 | **Playwright** | End-to-end browser testing | ^1.50.1 |
 | **pnpm** | Fast, disk space efficient package manager | >=10 |
 
@@ -287,10 +285,14 @@ import './styles/main.css';
    pnpm playwright install
    ```
 
-3. **Recommended VSCode Extensions:**
-   - Prettier - Code formatter
-   - ESLint
-   - Biome
+3. **Open the Workspace:**
+   ```bash
+   # Open the workspace file in VS Code for Biome-specific settings
+   code codalyn-loadout.code-workspace
+   ```
+
+4. **Install Recommended VSCode Extension:**
+   - Biome (biomejs.biome)
 
 ### Development Cycle
 
@@ -318,27 +320,25 @@ import './styles/main.css';
    - Browser automatically reloads on save
    - Check console for any errors
 
-5. **Type Checking:**
+5. **Code Quality Checks:**
    ```bash
-   pnpm check
-   ```
-
-6. **Code Linting:**
-   ```bash
-   # Check for issues
+   # Lint only
    pnpm lint
    
-   # Auto-fix issues
+   # Lint and auto-fix
    pnpm lint:fix
    
-   # Biome check
-   pnpm biome check .
+   # Format code
+   pnpm format
    
-   # Biome fix
-   pnpm biome check . --write
+   # Full check (lint + format + type check)
+   pnpm check
+   
+   # Full check with auto-fix
+   pnpm check:fix
    ```
 
-7. **Run Tests:**
+6. **Run Tests:**
    ```bash
    # Headless mode
    pnpm test

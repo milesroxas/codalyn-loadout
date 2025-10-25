@@ -1,7 +1,1 @@
-{
-	"editor.formatOnSave": true,
-	"editor.codeActionsOnSave": {
-		"source.fixAll.biome": "explicit",
-		"source.action.useSortedKeys.biome": "explicit"
-	}
-}
+{}
