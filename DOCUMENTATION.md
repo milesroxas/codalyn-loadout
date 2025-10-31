@@ -429,67 +429,41 @@ When you make changes:
 
 ## Code Quality & Linting
 
-### ESLint
-
-**Purpose**: Enforces coding standards and catches potential errors.
-
-**Configuration**: `eslint.config.js`
-
-```javascript
-import finsweetConfigs from "@finsweet/eslint-config";
-
-export default [...finsweetConfigs];
-```
-
-**Usage:**
-```bash
-# Check for issues
-pnpm lint
-
-# Auto-fix issues
-pnpm lint:fix
-```
-
-**Integration**: Uses Finsweet's ESLint configuration which includes:
-- TypeScript support
-- Prettier integration
-- Import sorting rules
-- Industry best practices
-
 ### Biome
 
-**Purpose**: Fast, modern linter and formatter (alternative/complement to ESLint/Prettier).
+**Purpose**: Fast, all-in-one linter and formatter for TypeScript projects.
 
 **Configuration**: `biome.json`
 
 ```json
 {
+  "$schema": "https://biomejs.dev/schemas/2.2.6/schema.json",
   "vcs": {
-    "enabled": false,
     "clientKind": "git",
-    "useIgnoreFile": false
+    "enabled": true,
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": false
   },
   "formatter": {
     "enabled": true,
-    "indentStyle": "tab"
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "es5",
+      "semicolons": "always",
+      "arrowParentheses": "always"
+    }
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true
-    }
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "double"
-    }
-  },
-  "assist": {
-    "enabled": true,
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
     }
   }
 }
@@ -528,46 +502,33 @@ pnpm lint:fix
 
 **Usage:**
 ```bash
-# Check for issues
-pnpm biome check .
+# Lint only
+pnpm lint
 
-# Fix issues
-pnpm biome check . --write
+# Lint and auto-fix
+pnpm lint:fix
 
 # Format only
-pnpm biome format . --write
-
-# Lint only
-pnpm biome lint .
-```
-
-### Prettier
-
-**Purpose**: Consistent code formatting across the project.
-
-**Usage:**
-```bash
-# Check formatting
-pnpm lint  # Includes Prettier check
-
-# Format files
 pnpm format
+
+# Full check (lint + type check)
+pnpm check
+
+# Full check with auto-fix
+pnpm check:fix
 ```
 
-**Integration**: Automatically formats on save if VSCode is configured properly.
 
 ### TypeScript Type Checking
 
 **Purpose**: Catch type errors before runtime.
 
-**Configuration**: `tsconfig.json`
-
 **Usage:**
 ```bash
-pnpm check
+pnpm check  # Biome + TypeScript check
 ```
 
-**Note**: This only checks types, it doesn't compile files (esbuild handles compilation).
+**Note**: Type checking is integrated with Biome checks. The build process is handled by esbuild.
 
 ---
 
@@ -663,6 +624,8 @@ codalyn-loadout/
 │
 ├── src/                          # Source code
 │   ├── index.ts                  # Main entry point
+│   ├── features/                 # Feature modules
+│   │   └── carousel/             # Carousel component
 │   └── utils/                    # Utility modules
 │       └── greet.ts              # Example utility
 │
@@ -670,7 +633,6 @@ codalyn-loadout/
 │   └── example.spec.ts           # Test specifications
 │
 ├── biome.json                    # Biome configuration
-├── eslint.config.js              # ESLint configuration
 ├── playwright.config.ts          # Playwright configuration
 ├── tsconfig.json                 # TypeScript configuration
 ├── package.json                  # Project metadata & scripts
@@ -686,18 +648,17 @@ codalyn-loadout/
 **Example Implementation:**
 
 ```typescript
-import { greetUser } from "$utils/greet";
+import { initCarousel } from './features/carousel';
+import { greetUser } from './utils/greet';
 
-// Wait for Webflow to be ready
 window.Webflow ||= [];
 window.Webflow.push(() => {
-  // Your code runs here after Webflow loads
-  const name = "John Doe";
-  greetUser(name);
+  greetUser('MILES');
+  initCarousel();
 });
 ```
 
-**Key Pattern**: The `window.Webflow.push()` pattern ensures your code runs after Webflow's scripts have loaded.
+**Key Pattern**: The `window.Webflow.push()` pattern ensures your code runs after Webflow's scripts have loaded. This example demonstrates importing and initializing feature modules.
 
 #### Utility Module (`src/utils/greet.ts`)
 
@@ -746,10 +707,11 @@ export const greetUser = (name: string) => {
 |--------|---------|---------|
 | `dev` | `cross-env NODE_ENV=development node ./bin/build.js` | Start development server |
 | `build` | `cross-env NODE_ENV=production node ./bin/build.js` | Build for production |
-| `lint` | `eslint ./src && prettier --check ./src` | Check code quality |
-| `lint:fix` | `eslint ./src --fix` | Auto-fix linting issues |
-| `check` | `tsc --noEmit` | Type checking only |
-| `format` | `prettier --write ./src` | Format all files |
+| `lint` | `biome lint ./src` | Check code quality |
+| `lint:fix` | `biome lint --write ./src` | Auto-fix linting issues |
+| `check` | `biome check ./src && tsc --noEmit` | Full check (lint + types) |
+| `check:fix` | `biome check --write ./src && tsc --noEmit` | Fix all issues |
+| `format` | `biome format --write ./src` | Format all files |
 | `test` | `playwright test` | Run all tests |
 | `test:ui` | `playwright test --ui` | Run tests with UI |
 | `update` | `pnpm update -i -L -r` | Interactive dependency updates |
@@ -820,18 +782,22 @@ import { greetUser } from "$utils/greet";
 {
   "formatter": {
     "enabled": true,
-    "indentStyle": "tab"       // Use tabs for indentation
+    "indentStyle": "space",    // Use 2 spaces for indentation
+    "indentWidth": 2,
+    "lineWidth": 100
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "double"   // Use double quotes
+      "quoteStyle": "single",  // Use single quotes
+      "trailingCommas": "es5",
+      "semicolons": "always",
+      "arrowParentheses": "always"
     }
   },
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": "on"  // Auto-organize imports
-      }
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
     }
   }
 }
@@ -1120,12 +1086,14 @@ if (isDev) {
 }
 ```
 
-#### 2. Use ESLint Disable Comments Sparingly
+#### 2. Use Biome Disable Comments Sparingly
 
 ```typescript
 // Only when absolutely necessary
-// eslint-disable-next-line no-console
-console.log('Important debug information');
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: this function needs multiple nested checks
+function complexCalculation() {
+  // ...
+}
 ```
 
 #### 3. Document Complex Logic
@@ -1197,16 +1165,16 @@ function calculatePrice(
 - Check browser console for EventSource errors
 - Ensure you're using development script tag, not production
 
-#### 4. Biome/ESLint Conflicts
+#### 4. Formatting Issues
 
 **Symptoms:**
-- Conflicting formatting rules
-- Code gets reformatted differently by different tools
+- Code formatting conflicts
+- Different formatting on save vs build
 
 **Solutions:**
-- Choose one formatter (recommended: Biome or Prettier)
-- Disable conflicting rules in ESLint config
-- Configure editor to use same formatter
+- Ensure Biome VSCode extension is installed and enabled
+- Run `pnpm check:fix` to auto-fix all formatting issues
+- Configure VSCode to format on save with Biome
 
 #### 5. Build Fails
 
@@ -1295,9 +1263,10 @@ Essential reading for:
 - esbuild build pipeline with development and production modes
 - TypeScript configuration with path aliases
 - Live reload system for development
-- ESLint and Biome integration
+- Biome linter and formatter integration
 - Playwright testing setup
 - Finsweet TypeScript utilities integration
+- Swiper carousel integration
 
 ---
 

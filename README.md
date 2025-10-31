@@ -1,251 +1,198 @@
-# Finsweet Developer Starter
+# Codalyn Loadout
 
-A starter template for both Client & Power projects.
+A professional development environment optimized for creating, testing, and deploying custom JavaScript/TypeScript scripts that embed into Webflow sites. This project provides a complete build pipeline that compiles TypeScript code into production-ready JavaScript bundles.
 
-Before starting to work with this template, please take some time to read through the documentation.
-
-## Reference
-
-- [Included tools](#included-tools)
-- [Requirements](#requirements)
-- [Getting started](#getting-started)
-  - [Installing](#installing)
-  - [Building](#building)
-    - [Serving files on development mode](#serving-files-on-development-mode)
-    - [Building multiple files](#building-multiple-files)
-    - [Setting up a path alias](#setting-up-a-path-alias)
-- [Contributing guide](#contributing-guide)
-- [Pre-defined scripts](#pre-defined-scripts)
-- [CI/CD](#cicd)
-  - [Continuous Integration](#continuous-integration)
-  - [Continuous Deployment](#continuous-deployment)
-  - [How to automatically deploy updates to npm](#how-to-automatically-deploy-updates-to-npm)
+**For complete documentation, see [DOCUMENTATION.md](./DOCUMENTATION.md)**
 
 ## Included tools
 
-This template contains some preconfigured development tools:
+This project contains preconfigured development tools:
 
-- [Typescript](https://www.typescriptlang.org/): A superset of Javascript that adds an additional layer of Typings, bringing more security and efficiency to the written code.
-- [Prettier](https://prettier.io/): Code formatting that assures consistency across all Finsweet's projects.
-- [ESLint](https://eslint.org/): Code linting that enforces industries' best practices. It uses [our own custom configuration](https://github.com/finsweet/eslint-config) to maintain consistency across all Finsweet's projects.
-- [Playwright](https://playwright.dev/): Fast and reliable end-to-end testing.
-- [esbuild](https://esbuild.github.io/): Javascript bundler that compiles, bundles and minifies the original Typescript files.
-- [Changesets](https://github.com/changesets/changesets): A way to manage your versioning and changelogs.
-- [Finsweet's TypeScript Utils](https://github.com/finsweet/ts-utils): Some utilities to help you in your Webflow development.
+- [TypeScript](https://www.typescriptlang.org/): Type-safe JavaScript development with full IDE support
+- [Biome](https://biomejs.dev/): Fast, all-in-one linter and formatter
+- [Playwright](https://playwright.dev/): End-to-end browser testing
+- [esbuild](https://esbuild.github.io/): Ultra-fast JavaScript bundler for compilation and minification
+- [Changesets](https://github.com/changesets/changesets): Version management and changelog generation
+- [Finsweet's TypeScript Utils](https://github.com/finsweet/ts-utils): Utilities for Webflow development
+- [Swiper](https://swiperjs.com/): Modern touch slider component
 
 ## Requirements
 
-This template requires the use of [pnpm](https://pnpm.js.org/en/). You can [install pnpm](https://pnpm.io/installation) with:
+This project requires [pnpm](https://pnpm.io/installation) version 10 or higher:
 
 ```bash
 npm i -g pnpm
 ```
 
-To enable automatic deployments to npm, please read the [Continuous Deployment](#continuous-deployment) section.
-
-## Getting started
-
-The quickest way to start developing a new project is by [creating a new repository from this template](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template#creating-a-repository-from-a-template).
-
-Once the new repository has been created, update the `package.json` file with the correct information, specially the name of the package which has to be unique.
-
 ### Installing
 
-After creating the new repository, open it in your terminal and install the packages by running:
+Install dependencies:
 
 ```bash
 pnpm install
 ```
 
-If this is the first time using Playwright and you want to use it in this project, you'll also have to install the browsers by running:
+Install Playwright browsers (if testing):
 
 ```bash
 pnpm playwright install
 ```
 
-You can read more about the use of Playwright in the [Testing](#testing) section.
-
-It is also recommended that you install the following extensions in your VSCode editor:
-
-- [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+**Recommended VSCode extensions:**
+- [Biome](https://marketplace.visualstudio.com/items?itemName=biomejs.biome)
 
 ### Building
 
-To build the files, you have two defined scripts:
+Two build scripts are available:
 
-- `pnpm dev`: Builds and creates a local server that serves all files (check [Serving files on development mode](#serving-files-on-development-mode) for more info).
-- `pnpm build`: Builds to the production directory (`dist`).
+- `pnpm dev`: Development mode with hot reload server at `http://localhost:3000`
+- `pnpm build`: Production build (minified to `dist/`)
 
-### Serving files on development mode
+### Development workflow
 
-When you run `pnpm dev`, two things happen:
+1. **Start development server:**
+   ```bash
+   pnpm dev
+   ```
 
-- esbuild is set to `watch` mode. Every time that you save your files, the project will be rebuilt.
-- A local server is created under `http://localhost:3000` that serves all your project files. You can import them in your Webflow projects like:
+2. **Add to Webflow:**
+   Add the script tag to your Webflow project's Footer Code:
+   ```html
+   <script defer src="http://localhost:3000/index.js"></script>
+   ```
 
-```html
-<script defer src="http://localhost:3000/{FILE_PATH}.js"></script>
-```
+3. **Develop:**
+   - Edit files in `src/`
+   - Browser auto-reloads on save
+   - Check console for errors
 
-- Live Reloading is enabled by default, meaning that every time you save a change in your files, the website you're working on will reload automatically. You can disable it in `/bin/build.js`.
+4. **Build for production:**
+   ```bash
+   pnpm build
+   ```
+   Deploy `dist/` files to your hosting and update Webflow to use the production URL.
 
 ### Building multiple files
 
-If you need to build multiple files into different outputs, you can do it by updating the build settings.
-
-In `bin/build.js`, update the `ENTRY_POINTS` array with any files you'd like to build:
+Configure multiple entry points in `bin/build.js`:
 
 ```javascript
 const ENTRY_POINTS = [
-  'src/home/index.ts',
-  'src/contact/whatever.ts',
-  'src/hooyah.ts',
-  'src/home/other.ts',
+  'src/index.ts',      // Main script
+  'src/home/index.ts', // Page-specific script
 ];
 ```
 
-This will tell `esbuild` to build all those files and output them in the `dist` folder for production and in `http://localhost:3000` for development.
+### CSS support
 
-### Building CSS files
-
-CSS files are also supported by the bundler. When including a CSS file as an entry point, the compiler will generate a minified version in your output folder.
-
-You can define a CSS entry point by either:
-
-- Manually defining it in the `bin/build.js` config. [See previous section](#building-multiple-files) for reference.
-- Or importing the file inside any of your JavaScript / TypeScript files:
+CSS is bundled automatically when imported:
 
 ```typescript
-// src/index.ts
-import './index.css';
+import './styles.css';
 ```
 
-CSS outputs are also available in `localhost` during [development mode](#serving-files-on-development-mode).
+Or add CSS files as entry points in `bin/build.js`.
 
-### Setting up a path alias
+### Path aliases
 
-Path aliases are very helpful to avoid code like:
+Clean imports using aliases defined in `tsconfig.json`:
 
 ```typescript
-import example from '../../../../utils/example';
+import { greetUser } from '$utils/greet';
 ```
 
-Instead, we can create path aliases that map to a specific folder, so the code becomes cleaner like:
+Pre-configured alias: `$utils/*` → `src/utils/*`
 
-```typescript
-import example from '$utils/example';
-```
-
-You can set up path aliases using the `paths` setting in `tsconfig.json`. This template has an already predefined path as an example:
-
+Add more aliases in `tsconfig.json`:
 ```json
 {
-  "paths": {
-    "$utils/*": ["src/utils/*"]
+  "compilerOptions": {
+    "paths": {
+      "$utils/*": ["src/utils/*"],
+      "$features/*": ["src/features/*"]
+    }
   }
 }
 ```
 
-To avoid any surprises, take some time to familiarize yourself with the [tsconfig](/tsconfig.json) enabled flags.
-
 ## Testing
 
-As previously mentioned, this library has [Playwright](https://playwright.dev/) included as an automated testing tool.
-
-All tests are located under the `/tests` folder. This template includes a test spec example that will help you catch up with Playwright.
-
-After [installing the dependencies](#installing), you can try it out by running `pnpm test`.
-Make sure you replace it with your own tests! Writing proper tests will help improve the maintainability and scalability of your project in the long term.
-
-By default, Playwright will also run `pnpm dev` in the background while the tests are running, so [your files served](#serving-files-on-development-mode) under `localhost:3000` will run as usual.
-You can disable this behavior in the `playwright.config.ts` file.
-
-If you project doesn't require any testing, you should disable the Tests job in the [CI workflow](#continuous-integration) by commenting it out in the `.github/workflows/ci.yml` file.
-This will prevent the tests from running when you open a Pull Request.
-
-## Contributing guide
-
-In general, your development workflow should look like this:
-
-1. Create a new branch where to develop a new feature or bug fix.
-2. Once you've finished the implementation, [create a Changeset](#continuous-deployment) (or multiple) explaining the changes that you've made in the codebase.
-3. Open a Pull Request and wait until the [CI workflows](#continuous-integration) finish. If something fails, please try to fix it before merging the PR.
-   If you don't want to wait for the CI workflows to run on GitHub to know if something fails, it will be always faster to run them in your machine before opening a PR.
-4. Merge the Pull Request. The Changesets bot will automatically open a new PR with updates to the `CHANGELOG.md`, you should also merge that one. If you have [automatic npm deployments](#how-to-automatically-deploy-updates-to-npm) enabled, Changesets will also publish this new version on npm.
-
-If you need to work on several features before publishing a new version on npm, it is a good practise to create a `development` branch where to merge all the PR's before pushing your code to master.
-
-## Pre-defined scripts
-
-This template contains a set of predefined scripts in the `package.json` file:
-
-- `pnpm dev`: Builds and creates a local server that serves all files (check [Serving files on development mode](#serving-files-on-development-mode) for more info).
-- `pnpm build`: Builds to the production directory (`dist`).
-- `pnpm lint`: Scans the codebase with ESLint and Prettier to see if there are any errors.
-- `pnpm lint:fix`: Fixes all auto-fixable issues in ESLint.
-- `pnpm check`: Checks for TypeScript errors in the codebase.
-- `pnpm format`: Formats all the files in the codebase using Prettier. You probably won't need this script if you have automatic [formatting on save](https://www.digitalocean.com/community/tutorials/code-formatting-with-prettier-in-visual-studio-code#automatically-format-on-save) active in your editor.
-- `pnpm test`: Will run all the tests that are located in the `/tests` folder.
-- `pnpm test:headed`: Will run all the tests that are located in the `/tests` folder visually in headed browsers.
-- `pnpm release`: This command is defined for [Changesets](https://github.com/changesets/changesets). You don't have to interact with it.
-- `pnpm run update`: Scans the dependencies of the project and provides an interactive UI to select the ones that you want to update.
-
-## CI/CD
-
-This template contains a set of helpers with proper CI/CD workflows.
-
-### Continuous Integration
-
-When you open a Pull Request, a Continuous Integration workflow will run to:
-
-- Lint & check your code. It uses the `pnpm lint` and `pnpm check` commands under the hood.
-- Run the automated tests. It uses the `pnpm test` command under the hood.
-
-If any of these jobs fail, you will get a warning in your Pull Request and should try to fix your code accordingly.
-
-**Note:** If your project doesn't contain any defined tests in the `/tests` folder, you can skip the Tests workflow job by commenting it out in the `.github/workflows/ci.yml` file. This will significantly improve the workflow running times.
-
-### Continuous Deployment
-
-[Changesets](https://github.com/changesets/changesets) allows us to generate automatic changelog updates when merging a Pull Request to the `master` branch.
-
-Before starting, make sure to [enable full compatibility with Changesets in the repository](#how-to-enable-continuous-deployment-with-changesets).
-
-To generate a new changelog, run:
+End-to-end tests using Playwright:
 
 ```bash
-pnpm changeset
+# Headless mode
+pnpm test
+
+# Visual UI mode
+pnpm test:ui
 ```
 
-You'll be prompted with a few questions to complete the changelog.
+Tests are located in `tests/` directory. The dev server automatically starts during testing.
 
-Once the Pull Request is merged into `master`, a new Pull Request will automatically be opened by a changesets bot that bumps the package version and updates the `CHANGELOG.md` file.
-You'll have to manually merge this new PR to complete the workflow.
+## Code quality
 
-If an `NPM_TOKEN` secret is included in the repository secrets, Changesets will automatically deploy the new package version to npm.
-See [how to automatically deploy updates to npm](#how-to-automatically-deploy-updates-to-npm) for more info.
+Quality checks before committing:
 
-#### How to enable Continuous Deployment with Changesets
+```bash
+# Lint only
+pnpm lint
 
-Some repositories may not have the required permissions to let Changesets interact with the repository.
+# Lint and auto-fix
+pnpm lint:fix
 
-To enable full compatibility with Changesets, go to the repository settings (`Settings > Actions > General > Workflow Permissions`) and define:
+# Format code
+pnpm format
 
-- ✅ Read and write permissions.
-- ✅ Allow GitHub Actions to create and approve pull requests.
+# Full check (lint + type check)
+pnpm check
 
-Enabling this setting for your organization account (`Account Settings > Actions > General`) could help streamline the process. By doing so, any new repos created under the org will automatically inherit the setting, which can save your teammates time and effort. This can only be applied to organization accounts at the time.
+# Full check with auto-fix
+pnpm check:fix
+```
 
-#### How to automatically deploy updates to npm
+## Available scripts
 
-As mentioned before, Changesets will automatically deploy the new package version to npm if an `NPM_TOKEN` secret is provided.
+| Command | Purpose |
+|---------|---------|
+| `pnpm dev` | Start development server with hot reload |
+| `pnpm build` | Build for production (minified) |
+| `pnpm lint` | Run Biome linter |
+| `pnpm lint:fix` | Fix linting issues automatically |
+| `pnpm format` | Format code with Biome |
+| `pnpm check` | Full check (lint + type check) |
+| `pnpm check:fix` | Fix all issues automatically |
+| `pnpm test` | Run Playwright tests (headless) |
+| `pnpm test:ui` | Run Playwright tests with UI |
+| `pnpm update` | Interactive dependency updates |
 
-This npm token should be:
+## Project structure
 
-- From Finsweet's npm organization if this repository is meant for internal/product development.
-- From a client's npm organization if this repository is meant for client development. In this case, you should ask the client to [create an npm account](https://www.npmjs.com/signup) and provide you the credentials (or the npm token, if they know how to get it).
+```
+codalyn-loadout/
+├── bin/                          # Build scripts
+│   ├── build.js                  # Main build configuration
+│   └── live-reload.js            # Live reload client script
+├── dist/                         # Build output (gitignored)
+├── src/                          # Source code
+│   ├── index.ts                  # Main entry point
+│   ├── features/                 # Feature modules
+│   │   └── carousel/             # Carousel component
+│   └── utils/                    # Utility modules
+├── tests/                        # Playwright tests
+├── biome.json                    # Biome configuration
+├── playwright.config.ts          # Playwright configuration
+├── tsconfig.json                 # TypeScript configuration
+└── package.json                  # Project metadata
+```
 
-Once you're logged into the npm account, you can get an access token by following [this guide](https://docs.npmjs.com/creating-and-viewing-access-tokens).
+## Documentation
 
-The access token must be then placed in a [repository secret](https://docs.github.com/en/codespaces/managing-codespaces-for-your-organization/managing-encrypted-secrets-for-your-repository-and-organization-for-codespaces#adding-secrets-for-a-repository) named `NPM_TOKEN`.
+For comprehensive documentation on:
+- Build system architecture
+- Development workflow details
+- Production deployment
+- Code quality & best practices
+- Webflow integration patterns
+- Troubleshooting
+
+See [DOCUMENTATION.md](./DOCUMENTATION.md)
