@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'bin/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'tsconfig.json'
 
 jobs:
   build-and-commit:
