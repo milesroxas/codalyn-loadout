@@ -28,5 +28,5 @@ export function destroyCarousel(): void {
   instances = [];
 }
 
-// Re-export types
-export type { CarouselEffect, CarouselInstance } from './types';
+// Re-export domain-specific types only
+export type { CarouselInstance } from './types';
