@@ -43,6 +43,7 @@
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
     "lint:fix": "biome lint --write ./src",
+    "push": "git restore dist/ 2>/dev/null || true && git pull --rebase origin main && git push origin main",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "update": "pnpm update -i -L -r"
