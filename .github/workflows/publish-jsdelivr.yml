@@ -14,17 +14,21 @@ on:
 jobs:
   build-and-commit:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
+          run_install: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

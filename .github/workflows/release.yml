@@ -5,9 +5,12 @@ on:
     branches:
       - master
       - main
+    paths-ignore:
+      - 'dist/**'
 
 jobs:
   release:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     uses: finsweet/workflow-release/.github/workflows/release.yml@main
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
