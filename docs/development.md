@@ -106,7 +106,7 @@ const ENTRY_POINTS = ["src/index.ts"];
 
 // Development Server Configuration
 const LIVE_RELOAD = !PRODUCTION;
-const SERVE_PORT = 3000;
+const SERVE_PORT = 3005;
 const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
 ```
 

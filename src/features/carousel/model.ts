@@ -1,6 +1,12 @@
-import type { SwiperOptions } from 'swiper/types';
+import { EffectFade, Navigation, Pagination } from 'swiper/modules';
+import type { SwiperModule, SwiperOptions } from 'swiper/types';
 
 import type { CarouselDataset } from './types';
+
+export interface CarouselConfig {
+  modules: SwiperModule[];
+  options: SwiperOptions;
+}
 
 /**
  * Parse string to boolean following Webflow attribute conventions
@@ -118,8 +124,12 @@ function buildPaginationConfig(
 /**
  * Build Swiper configuration from element dataset
  * Implements DDD principles with clear domain logic separation
+ * Returns both the config and required modules to avoid global registration issues
  */
-export function buildCarouselConfig(element: HTMLElement, dataset: CarouselDataset): SwiperOptions {
+export function buildCarouselConfig(
+  element: HTMLElement,
+  dataset: CarouselDataset
+): CarouselConfig {
   const effect = dataset.effect as SwiperOptions['effect'];
 
   const config: SwiperOptions = {
@@ -131,18 +141,29 @@ export function buildCarouselConfig(element: HTMLElement, dataset: CarouselDatas
     spaceBetween: parseNumber(dataset.spaceBetween, 0),
   };
 
+  const modules: SwiperModule[] = [];
+
   // Fade effect configuration
   if (effect === 'fade') {
     config.fadeEffect = {
       crossFade: parseBoolean(dataset.crossfade),
     };
+    modules.push(EffectFade);
   }
 
   // Navigation controls (attribute-based)
-  config.navigation = buildNavigationConfig(element, dataset);
+  const navigation = buildNavigationConfig(element, dataset);
+  if (navigation) {
+    config.navigation = navigation;
+    modules.push(Navigation);
+  }
 
   // Pagination (attribute-based)
-  config.pagination = buildPaginationConfig(element, dataset);
+  const pagination = buildPaginationConfig(element, dataset);
+  if (pagination) {
+    config.pagination = pagination;
+    modules.push(Pagination);
+  }
 
   // Responsive breakpoints
   const breakpoints = parseBreakpoints(dataset.breakpoints);
@@ -150,5 +171,5 @@ export function buildCarouselConfig(element: HTMLElement, dataset: CarouselDatas
     config.breakpoints = breakpoints;
   }
 
-  return config;
+  return { modules, options: config };
 }

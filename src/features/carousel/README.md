@@ -12,11 +12,22 @@ Follows Feature-Sliced Design (FSD) and Domain-Driven Design (DDD) principles wi
 src/features/carousel/
 ├── index.ts      # Public API and initialization
 ├── lib.ts        # Core carousel creation logic
-├── model.ts      # Configuration building and domain logic
+├── model.ts      # Configuration building and module selection
 ├── types.ts      # Type definitions (derived from Swiper)
 ├── styles.css    # Carousel styles
 └── README.md     # This file
 ```
+
+### Module Registration Strategy
+
+**Per-Instance Module Registration**: Swiper modules (Navigation, Pagination, EffectFade) are registered on a per-instance basis rather than globally. This ensures:
+
+- Modules are only loaded when their corresponding DOM elements exist
+- No initialization errors for carousels missing optional features
+- Smaller bundle sizes when features aren't used
+- Better memory management and performance
+
+The `buildCarouselConfig()` function in [model.ts](./model.ts) automatically determines which modules are needed based on the carousel's configuration and DOM structure.
 
 ## Basic Usage
 
@@ -321,7 +332,7 @@ For Webflow-friendly editing, you can use CSS custom properties with container q
 
 This feature follows best practices by:
 - Using Swiper's types directly where needed (no redundant re-exports)
-- Only defining domain-specific types (e.g., `CarouselDataset`, `CarouselInstance`)
+- Only defining domain-specific types (e.g., `CarouselDataset`, `CarouselInstance`, `CarouselConfig`)
 - Maintaining single source of truth from the Swiper library
 - Avoiding type duplication and unnecessary abstraction layers
 
@@ -330,6 +341,7 @@ This feature follows best practices by:
 ```typescript
 // Domain-specific types from our carousel feature
 import type { CarouselInstance } from './features/carousel';
+import type { CarouselConfig } from './features/carousel/model';
 
 // Use Swiper types directly when needed
 import type { SwiperOptions } from 'swiper/types';
@@ -341,6 +353,19 @@ const customConfig: SwiperOptions = {
   // Full autocomplete support
 };
 ```
+
+### CarouselConfig Interface
+
+The `CarouselConfig` interface returned by `buildCarouselConfig()` includes:
+
+```typescript
+interface CarouselConfig {
+  modules: SwiperModule[];  // Required modules for this instance
+  options: SwiperOptions;    // Swiper configuration options
+}
+```
+
+This separation allows the carousel to dynamically include only the modules it needs.
 
 ## Programmatic Usage
 
@@ -408,7 +433,13 @@ destroyCarousel();
 
 - Verify button selectors are correct
 - Check that buttons are inside or adjacent to carousel container
-- Ensure Navigation module is registered (done automatically)
+- Navigation module is registered automatically when navigation elements are found
+
+### Pagination not working
+
+- Verify pagination element exists in the DOM
+- Check that the selector or data attribute matches the element
+- Pagination module is registered automatically when pagination element is found
 
 ### Breakpoints not applying
 
@@ -418,9 +449,16 @@ destroyCarousel();
 
 ### Effects not working
 
-- Import and register required effect modules in `lib.ts:8`
-- Currently registered: `EffectFade`, `Navigation`, `Pagination`
-- Add others as needed: `EffectCube`, `EffectCoverflow`, etc.
+- Verify the effect is supported (see Available Effects section)
+- EffectFade is registered automatically when `data-effect="fade"` is used
+- For other effects (cube, coverflow, flip, creative, cards), modules need to be added to [model.ts](./model.ts)
+
+### TypeError: Cannot read properties of undefined
+
+If you see errors like `Cannot read properties of undefined (reading 'el')`:
+- This typically means a Swiper module is globally registered but the carousel doesn't have required DOM elements
+- Our implementation fixes this by using per-instance module registration
+- Modules are only registered when their corresponding elements exist in the DOM
 
 ## API Reference
 
@@ -457,12 +495,25 @@ interface CarouselInstance {
 }
 ```
 
+#### `CarouselConfig`
+
+Configuration object returned by `buildCarouselConfig()`:
+
+```typescript
+interface CarouselConfig {
+  modules: SwiperModule[];  // Modules required for this instance
+  options: SwiperOptions;    // Swiper configuration options
+}
+```
+
+This interface enables per-instance module registration, ensuring only necessary modules are loaded.
+
 #### Using Swiper Types
 
 For Swiper-specific types, import directly from the library:
 
 ```typescript
-import type { SwiperOptions } from 'swiper/types';
+import type { SwiperOptions, SwiperModule } from 'swiper/types';
 
 // Access specific option types
 type Effect = SwiperOptions['effect'];

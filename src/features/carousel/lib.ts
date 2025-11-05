@@ -1,11 +1,7 @@
 import Swiper from 'swiper';
-import { EffectFade, Navigation, Pagination } from 'swiper/modules';
 
 import { buildCarouselConfig } from './model';
 import type { CarouselDataset, CarouselInstance } from './types';
-
-// Register Swiper modules once
-Swiper.use([Navigation, Pagination, EffectFade]);
 
 /**
  * Validate carousel element structure
@@ -23,9 +19,12 @@ export function createCarousel(element: HTMLElement): CarouselInstance | null {
   }
 
   const dataset = element.dataset as CarouselDataset;
-  const config = buildCarouselConfig(element, dataset);
+  const { modules, options } = buildCarouselConfig(element, dataset);
 
-  const swiper = new Swiper(element, config);
+  const swiper = new Swiper(element, {
+    ...options,
+    modules,
+  });
 
   return {
     destroy: () => {
