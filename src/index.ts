@@ -3,6 +3,6 @@ import { greetUser } from './utils/greet';
 
 window.Webflow ||= [];
 window.Webflow.push(() => {
-  greetUser('MILES');
+  greetUser('Updated');
   initCarousel();
 });
