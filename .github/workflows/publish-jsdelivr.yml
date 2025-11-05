@@ -57,3 +57,11 @@ jobs:
             git commit -m "build: update dist files for jsDelivr [skip ci]"
             git push
           fi
+
+      - name: Purge jsDelivr cache
+        if: success()
+        run: |
+          echo "Purging jsDelivr cache..."
+          curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/dist/index.js"
+          curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/dist/index.css"
+          echo "Cache purged successfully!"

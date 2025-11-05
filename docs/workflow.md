@@ -23,8 +23,10 @@ pnpm push         # 5. Push → GitHub Actions builds → jsDelivr updates
 When you push to GitHub:
 1. GitHub Actions builds your `dist/` files automatically
 2. GitHub Actions commits `dist/` back to your repo
-3. jsDelivr mirrors your GitHub repo within 2-5 minutes
-4. Your changes go live at: `https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js`
+3. GitHub Actions purges jsDelivr cache (forces immediate update)
+4. Your changes go live **immediately** at: `https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js`
+
+**Note:** Without cache purging, jsDelivr caches files for up to 12 hours. The workflow now includes automatic cache purging for instant updates!
 
 ## Simple 4-Step Workflow
 
@@ -62,7 +64,7 @@ pnpm push
 **That's it!** GitHub Actions will:
 - Build production files
 - Commit `dist/` to GitHub
-- jsDelivr updates automatically (2-5 min)
+- Purge jsDelivr cache (instant updates!)
 
 ---
 
