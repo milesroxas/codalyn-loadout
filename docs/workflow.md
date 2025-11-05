@@ -2,100 +2,104 @@
 
 Quick reference for working with this jsDelivr-integrated Webflow project.
 
-## Daily Development Workflow
-
-### 1. Local Development
+## TL;DR - The 4 Commands You Need
 
 ```bash
-# Start dev server for testing in Webflow
-pnpm dev
-
-# In Webflow, use:
-# <script defer src="http://localhost:3000/index.js"></script>
+pnpm dev          # 1. Test locally at localhost:3005
+pnpm check:fix    # 2. Fix code quality issues
+git add src/      # 3. Stage your changes
+git commit -m "feat: description"  # 4. Commit
+pnpm push         # 5. Push → GitHub Actions builds → jsDelivr updates
 ```
 
-### 2. Making Changes
+**Never commit `dist/` files manually!** GitHub Actions builds them automatically.
+
+---
+
+## How jsDelivr Deployment Works
+
+**Important:** jsDelivr automatically serves files directly from your GitHub repository. You never need to manually upload files to jsDelivr!
+
+When you push to GitHub:
+1. GitHub Actions builds your `dist/` files automatically
+2. GitHub Actions commits `dist/` back to your repo
+3. jsDelivr mirrors your GitHub repo within 2-5 minutes
+4. Your changes go live at: `https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js`
+
+## Simple 4-Step Workflow
+
+### Step 1: Make Changes
 
 ```bash
 # Edit files in src/
-# - src/features/carousel/
-# - src/utils/
-# etc.
-
-# Test your changes
-pnpm dev  # Watch mode with live reload
+pnpm dev  # Test locally at localhost:3005
 ```
 
-### 3. Code Quality
+### Step 2: Check Code Quality
 
 ```bash
-# Before committing, run checks
 pnpm check:fix  # Auto-fix linting and formatting
-pnpm check      # Verify everything passes
 ```
 
-### 4. Committing Changes
+### Step 3: Commit Your Changes
 
 ```bash
-# Stage only source files (NOT dist/)
+# Stage ONLY source files (NOT dist/)
 git add src/
-git add package.json  # If you changed dependencies
+git add bin/              # If you changed build scripts
+git add package.json      # If you changed dependencies
+
+# Commit with conventional commit message
 git commit -m "feat: your feature description"
 ```
 
-### 5. Pushing to GitHub (Automated)
+### Step 4: Push to GitHub
 
 ```bash
-# Use the simplified push command
 pnpm push
 ```
 
-**What `pnpm push` does:**
-1. Discards any local dist/ builds
-2. Pulls latest changes (including automated builds)
-3. Pushes your source code changes
-4. GitHub Actions will then:
-   - Build production files
-   - Commit dist/ files
-   - jsDelivr updates within 2-5 minutes
+**That's it!** GitHub Actions will:
+- Build production files
+- Commit `dist/` to GitHub
+- jsDelivr updates automatically (2-5 min)
 
-### 6. Alternative: Manual Push
+---
 
-If you prefer manual control:
+## What `pnpm push` Actually Does
 
 ```bash
-# Discard local dist builds
-git restore dist/
-
-# Pull latest automated builds
-git pull --rebase origin main
-
-# Push your changes
-git push origin main
+# Under the hood, it runs:
+git restore dist/                    # Discard local builds
+git pull --rebase origin main        # Get latest (including bot commits)
+git push origin main                 # Push your changes
 ```
+
+This prevents conflicts between your local builds and GitHub Actions builds.
 
 ## Complete Example Session
 
 ```bash
-# 1. Start working
+# 1. Make changes
+# Edit src/features/carousel/model.ts
+
+# 2. Test locally
 pnpm dev
+# Test in Webflow with localhost:3005
 
-# 2. Make changes to src/features/carousel/model.ts
-
-# 3. Test in Webflow with localhost:3000
-
-# 4. Verify code quality
+# 3. Code quality check
 pnpm check:fix
 
-# 5. Commit your changes
+# 4. Commit
 git add src/
 git commit -m "feat: add breakpoint configuration to carousel"
 
-# 6. Push (automated)
+# 5. Push
 pnpm push
 
-# 7. Wait 2-5 minutes, then test in Webflow production:
+# 6. Wait 2-5 minutes, then test production:
 # https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js
+# Hard refresh browser (Cmd+Shift+R)
 ```
 
 ## Webflow Integration
@@ -104,7 +108,7 @@ pnpm push
 
 ```html
 <!-- Webflow Project Settings > Custom Code > Footer Code -->
-<script defer src="http://localhost:3000/index.js"></script>
+<script defer src="http://localhost:3005/index.js"></script>
 ```
 
 ### Production (Auto-updating)
@@ -127,38 +131,55 @@ pnpm push
 
 ### ✅ DO
 
+- Work directly on `main` branch (no feature branches needed for solo work)
 - Always use `pnpm push` instead of `git push`
-- Only commit `src/` files manually
+- Only commit `src/`, `bin/`, `docs/`, `package.json` files
 - Test locally with `pnpm dev` before pushing
 - Run `pnpm check:fix` before committing
-- Use conventional commit messages (feat:, fix:, chore:)
+- Use conventional commit messages (feat:, fix:, chore:, docs:)
 
 ### ❌ DON'T
 
 - Don't manually commit `dist/` files (GitHub Actions handles this)
-- Don't push without pulling first
-- Don't edit dist/ files directly
-- Don't skip `pnpm check` before committing
+- Don't use `git push` directly (use `pnpm push` instead)
+- Don't edit `dist/` files directly
+- Don't skip `pnpm check:fix` before committing
+- Don't manually upload files to jsDelivr (it mirrors GitHub automatically!)
 
 ## Troubleshooting
 
-### "Your branch has diverged"
+### "Cannot pull with rebase: You have unstaged changes"
 
-This happens if you forgot to pull before pushing.
+**Problem:** You have uncommitted changes when trying to push.
 
 **Solution:**
 ```bash
-pnpm push  # This handles it automatically
+# Option 1: Commit or restore the changes first
+git status                    # See what changed
+git restore dist/            # If it's dist/, discard it
+git add docs/                # If it's source files, commit them
+
+# Then try again
+pnpm push
+```
+
+### "Your branch has diverged"
+
+**Problem:** Your local branch and remote have different commits.
+
+**Solution:**
+```bash
+pnpm push  # This handles it automatically with --rebase
 ```
 
 ### "Unstaged changes in dist/"
 
-You have local builds that conflict with remote.
+**Problem:** You ran `pnpm dev` or `pnpm build` locally, creating dist/ files that conflict with GitHub's automated builds.
 
 **Solution:**
 ```bash
-git restore dist/
-git pull origin main
+git restore dist/            # Discard local builds
+pnpm push                    # Let GitHub Actions build instead
 ```
 
 ### Changes Not Appearing in Webflow
@@ -206,14 +227,20 @@ git push origin v1.0.0
 | `pnpm push` | Smart push with auto-sync |
 | `pnpm test` | Run Playwright tests |
 
-## File Structure
+## File Structure & What to Commit
 
 ```
-src/              → Your code (commit this)
-dist/             → Built files (DON'T commit, CI handles it)
-.github/workflows → Automation (rarely modified)
-bin/              → Build scripts (rarely modified)
+src/              → ✅ Commit this (your source code)
+bin/              → ✅ Commit this (build scripts)
+docs/             → ✅ Commit this (documentation)
+package.json      → ✅ Commit this (dependencies)
+pnpm-lock.yaml    → ✅ Commit this (lock file)
+
+dist/             → ❌ Never commit (GitHub Actions builds this)
+node_modules/     → ❌ Never commit (gitignored)
 ```
+
+**Remember:** GitHub Actions automatically builds and commits `dist/` files. You only commit source code!
 
 ## Getting Help
 
