@@ -135,8 +135,6 @@ export function buildCarouselConfig(
   const config: SwiperOptions = {
     effect: effect ?? 'slide',
     loop: true,
-    observeParents: true,
-    observer: true,
     slidesPerView: parseNumberOrAuto(dataset.slidesPerView, 1),
     spaceBetween: parseNumber(dataset.spaceBetween, 0),
   };

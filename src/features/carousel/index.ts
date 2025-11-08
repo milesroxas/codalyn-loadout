@@ -19,6 +19,12 @@ export function initCarousel(): void {
 }
 
 /**
+ * Standardized init function for feature loader
+ * Alias for initCarousel to match FeatureModule interface
+ */
+export const init = initCarousel;
+
+/**
  * Destroy all carousel instances
  */
 export function destroyCarousel(): void {
