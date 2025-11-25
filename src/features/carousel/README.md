@@ -66,6 +66,8 @@ All configuration is done through HTML data attributes on the carousel container
 | `data-effect` | string | `'slide'` | Transition effect (see Effects section) |
 | `data-slides-per-view` | number\|'auto' | `1` | Number of slides visible at once |
 | `data-space-between` | number | `0` | Space between slides in pixels |
+| `data-centered-slides` | boolean | `false` | Center the active slide (empty string or 'true' = true) |
+| `data-loop` | boolean | `true` | Enable loop mode (empty string or 'true' = true, 'false' = false) |
 | `data-crossfade` | boolean | `false` | Enable cross-fade for fade effect (empty string or 'true' = true) |
 
 **Example:**
@@ -103,9 +105,426 @@ All effects are type-safe and derived from Swiper's library types:
 </div>
 ```
 
+**Example with centered slides:**
+
+```html
+<div class="swiper"
+     data-slider-instance
+     data-slides-per-view="3"
+     data-space-between="20"
+     data-centered-slides>
+  <!-- slides -->
+</div>
+```
+
+**Example with loop disabled:**
+
+```html
+<div class="swiper"
+     data-slider-instance
+     data-loop="false">
+  <!-- slides -->
+</div>
+```
+
+## Styling Active and Inactive Slides
+
+Swiper automatically adds CSS classes to slides that you can use for styling. This is perfect for creating visual effects where the active slide stands out.
+
+### CSS Classes Available
+
+Swiper provides these built-in classes:
+
+- `.swiper-slide-active` - The currently active/centered slide
+- `.swiper-slide-prev` - The slide immediately before the active one
+- `.swiper-slide-next` - The slide immediately after the active one
+- `.swiper-slide-visible` - All slides currently visible in the viewport (when `slidesPerView > 1`)
+- `.swiper-slide-duplicate` - Cloned slides used for loop effect
+
+### Common Use Cases
+
+#### 1. Fade Out Inactive Slides
+
+```css
+.swiper-slide {
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+.swiper-slide-active {
+  opacity: 1;
+}
+```
+
+#### 2. Scale Up Active Slide (Great with Centered Slides)
+
+```css
+.swiper-slide {
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+
+.swiper-slide-active {
+  transform: scale(1);
+}
+```
+
+#### 3. Blur Inactive Slides
+
+```css
+.swiper-slide {
+  filter: blur(3px);
+  transition: filter 0.3s ease;
+}
+
+.swiper-slide-active {
+  filter: blur(0);
+}
+```
+
+#### 4. Grayscale/Color Effect
+
+```css
+.swiper-slide {
+  filter: grayscale(100%);
+  transition: filter 0.3s ease;
+}
+
+.swiper-slide-active {
+  filter: grayscale(0);
+}
+```
+
+#### 5. Combination Effect (Popular for Centered Carousels)
+
+```css
+.swiper-slide {
+  opacity: 0.4;
+  transform: scale(0.85);
+  filter: blur(2px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swiper-slide-active {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+  z-index: 10;
+}
+
+/* Optional: Style adjacent slides differently */
+.swiper-slide-prev,
+.swiper-slide-next {
+  opacity: 0.6;
+  transform: scale(0.9);
+}
+```
+
+#### 6. Shadow and Elevation Effect
+
+```css
+.swiper-slide {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.swiper-slide-active {
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-8px);
+}
+```
+
+### Complete Example with HTML
+
+**HTML:**
+```html
+<div class="hero-carousel swiper"
+     data-slider-instance
+     data-slides-per-view="3"
+     data-space-between="30"
+     data-centered-slides>
+  <div class="swiper-wrapper">
+    <div class="swiper-slide">
+      <img src="image1.jpg" alt="Slide 1">
+      <h3>Slide Title 1</h3>
+    </div>
+    <div class="swiper-slide">
+      <img src="image2.jpg" alt="Slide 2">
+      <h3>Slide Title 2</h3>
+    </div>
+    <div class="swiper-slide">
+      <img src="image3.jpg" alt="Slide 3">
+      <h3>Slide Title 3</h3>
+    </div>
+  </div>
+</div>
+```
+
+**CSS:**
+```css
+/* Base slide styling */
+.hero-carousel .swiper-slide {
+  opacity: 0.5;
+  transform: scale(0.85);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Active slide gets full attention */
+.hero-carousel .swiper-slide-active {
+  opacity: 1;
+  transform: scale(1);
+  z-index: 10;
+}
+
+/* Style images inside slides */
+.hero-carousel .swiper-slide img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Style text content */
+.hero-carousel .swiper-slide h3 {
+  padding: 1rem;
+  margin: 0;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.hero-carousel .swiper-slide-active h3 {
+  opacity: 1;
+}
+```
+
+### Advanced: Targeting Slides by Position
+
+Use CSS selectors to target slides based on their position relative to the active slide:
+
+```css
+/* Target all inactive slides */
+.swiper-slide:not(.swiper-slide-active) {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Target first slide after active */
+.swiper-slide-active + .swiper-slide {
+  opacity: 0.7;
+}
+
+/* Target slide before active (using :has selector - modern browsers) */
+.swiper-slide:has(+ .swiper-slide-active) {
+  opacity: 0.7;
+}
+```
+
+### Tips for Webflow
+
+1. **Add custom class to your carousel container** for scoped styling:
+   ```html
+   <div class="my-carousel swiper" data-slider-instance>
+   ```
+
+2. **Use Webflow's embed element** to add custom CSS:
+   - Add an Embed element to your page
+   - Wrap your styles in `<style>` tags
+   - Use the custom class to scope your styles
+
+3. **Test in preview mode** to see the active/inactive classes in action
+
+4. **Add smooth transitions** to make the effect feel polished:
+   ```css
+   .swiper-slide {
+     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+   }
+   ```
+
+All of these classes are automatically applied by Swiper as users navigate through the carousel. No additional JavaScript configuration needed!
+
+## Preventing Swipe on Specific Elements
+
+Sometimes you need to prevent swiping on certain elements inside your slides, such as buttons, links, or interactive components. Swiper provides a built-in solution for this.
+
+### How It Works
+
+Add the `swiper-no-swiping` class to any element where you want to disable swiping. This is automatically enabled in the carousel configuration.
+
+### Basic Usage
+
+```html
+<div class="swiper" data-slider-instance>
+  <div class="swiper-wrapper">
+    <div class="swiper-slide">
+      <img src="image1.jpg" alt="Slide 1">
+
+      <!-- Swiping is disabled on this button -->
+      <button class="swiper-no-swiping">Click Me</button>
+    </div>
+
+    <div class="swiper-slide">
+      <img src="image2.jpg" alt="Slide 2">
+
+      <!-- Swiping is disabled on this link -->
+      <a href="#" class="swiper-no-swiping">Learn More</a>
+    </div>
+  </div>
+</div>
+```
+
+### Common Use Cases
+
+#### 1. Interactive Buttons
+
+```html
+<div class="swiper-slide">
+  <div class="card">
+    <img src="product.jpg" alt="Product">
+    <h3>Product Name</h3>
+    <p>Description text...</p>
+
+    <!-- User can click/tap without triggering swipe -->
+    <button class="swiper-no-swiping btn-primary">
+      Add to Cart
+    </button>
+  </div>
+</div>
+```
+
+#### 2. Links and Navigation
+
+```html
+<div class="swiper-slide">
+  <article>
+    <h2>Blog Post Title</h2>
+    <p>Excerpt of the blog post...</p>
+
+    <!-- User can click link without swiping -->
+    <a href="/blog/post" class="swiper-no-swiping">
+      Read More →
+    </a>
+  </article>
+</div>
+```
+
+#### 3. Form Inputs
+
+```html
+<div class="swiper-slide">
+  <div class="form-container swiper-no-swiping">
+    <!-- Entire form area prevents swiping -->
+    <input type="email" placeholder="Email">
+    <input type="text" placeholder="Name">
+    <button type="submit">Subscribe</button>
+  </div>
+</div>
+```
+
+#### 4. Video Players or Interactive Media
+
+```html
+<div class="swiper-slide">
+  <!-- Prevent swiping on video so users can interact with controls -->
+  <video class="swiper-no-swiping" controls>
+    <source src="video.mp4" type="video/mp4">
+  </video>
+</div>
+```
+
+#### 5. Custom Interactive Components
+
+```html
+<div class="swiper-slide">
+  <div class="product-card">
+    <img src="product.jpg" alt="Product">
+
+    <!-- Entire action area prevents swiping -->
+    <div class="actions swiper-no-swiping">
+      <button class="btn-wishlist">♥</button>
+      <button class="btn-cart">Add to Cart</button>
+      <button class="btn-share">Share</button>
+    </div>
+  </div>
+</div>
+```
+
+### Webflow Implementation
+
+**Method 1: Add Class in Webflow Designer**
+1. Select the element (button, link, etc.)
+2. In the Style panel, add the class `swiper-no-swiping`
+3. The element will now prevent swiping when interacted with
+
+**Method 2: Add via Custom Attribute**
+1. Select the element
+2. In the Settings panel, add a custom attribute
+3. Name: `class`, Value: `swiper-no-swiping`
+
+### Styling No-Swiping Elements
+
+You can style elements with the no-swiping class to indicate they're interactive:
+
+```css
+.swiper-no-swiping {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Indicate interactive elements on hover */
+.swiper-slide .swiper-no-swiping:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+/* Buttons with no-swiping */
+button.swiper-no-swiping,
+a.swiper-no-swiping {
+  position: relative;
+  z-index: 10; /* Ensure buttons are above slide */
+}
+```
+
+### Important Notes
+
+1. **Mobile Touch**: On mobile devices, tapping/touching elements with `swiper-no-swiping` will trigger the element's action instead of starting a swipe.
+
+2. **Parent Containers**: You can add the class to a parent container to prevent swiping on all child elements:
+   ```html
+   <div class="interactive-area swiper-no-swiping">
+     <button>Button 1</button>
+     <button>Button 2</button>
+     <a href="#">Link</a>
+   </div>
+   ```
+
+3. **Still Navigable**: Users can still swipe on other areas of the slide to navigate. The no-swiping class only prevents swiping on specific elements.
+
+4. **Accessibility**: Elements with `swiper-no-swiping` remain fully accessible via keyboard and assistive technologies.
+
+### Troubleshooting
+
+**Problem**: Swiping still works on my button
+- **Solution**: Ensure the class name is exactly `swiper-no-swiping` (check for typos)
+- **Solution**: Check that the element isn't covered by another element with higher z-index
+
+**Problem**: Click/tap not working on mobile
+- **Solution**: Add `cursor: pointer` to the element's CSS
+- **Solution**: Ensure the element has appropriate touch-action CSS properties
+
+**Problem**: Need to disable swiping everywhere
+- **Solution**: Add `swiper-no-swiping` class to the entire slide:
+  ```html
+  <div class="swiper-slide swiper-no-swiping">
+    <!-- All content here prevents swiping -->
+  </div>
+  ```
+
 ## Navigation Configuration
 
-**NEW FEATURE**: Attribute-based navigation element assignment with flexible selector options.
+Attribute-based navigation element assignment with flexible selector options.
 
 ### Method 1: Class-based (Traditional)
 
@@ -412,7 +831,7 @@ destroyCarousel();
 
 4. **Performance considerations:**
    - Use `data-slides-per-view="auto"` for variable-width slides
-   - Enable loop only when needed (currently always enabled)
+   - Disable loop mode with `data-loop="false"` when not needed (default is `true`)
    - Consider lazy loading for image-heavy carousels
 
 5. **Accessibility:**

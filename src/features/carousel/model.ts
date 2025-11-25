@@ -132,11 +132,20 @@ export function buildCarouselConfig(
 ): CarouselConfig {
   const effect = dataset.effect as SwiperOptions['effect'];
 
+  const centeredSlides = parseBoolean(dataset.centeredSlides);
+  const loop = dataset.loop !== undefined ? parseBoolean(dataset.loop) : true;
+
   const config: SwiperOptions = {
     effect: effect ?? 'slide',
-    loop: true,
+    loop,
     slidesPerView: parseNumberOrAuto(dataset.slidesPerView, 1),
     spaceBetween: parseNumber(dataset.spaceBetween, 0),
+    centeredSlides,
+    // When centered, start at first slide (index 0) to ensure first slide is centered
+    initialSlide: centeredSlides ? 0 : undefined,
+    // No swiping configuration - allows preventing swipe on specific elements
+    noSwiping: true,
+    noSwipingClass: 'swiper-no-swiping',
   };
 
   const modules: SwiperModule[] = [];

@@ -24,6 +24,12 @@ export interface CarouselDataset {
   /** Space between slides in pixels */
   spaceBetween?: string;
 
+  /** Center the active slide (empty string or 'true' for true) */
+  centeredSlides?: string;
+
+  /** Enable loop mode (empty string or 'true' for true) */
+  loop?: string;
+
   /** Selector or attribute for next navigation button */
   navNext?: string;
 
