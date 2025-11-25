@@ -106,28 +106,12 @@ pnpm push
 
 ## Webflow Integration
 
-### Development (Local Testing)
+### Webflow Global Custom Code
 
-```html
-<!-- Webflow Project Settings > Custom Code > Footer Code -->
-<script defer src="http://localhost:3005/index.js"></script>
-```
-
-### Production (Auto-updating)
-
-```html
-<!-- Always gets latest from main branch -->
-<script defer src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js"></script>
-<link href="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.css" rel="stylesheet"/>
-```
-
-### Production (Pinned Version)
-
-```html
-<!-- Stable version, won't auto-update -->
-<script defer src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@v1.0.0/dist/index.js"></script>
-<link href="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@v1.0.0/dist/index.css" rel="stylesheet"/>
-```
+- Copy the **head** and **before `</body>`** snippets from your terminal when running `pnpm dev`
+- Add these snippets to Webflow Project Settings → Custom Code
+- The toggle button **only appears when viewing on localhost** (not on Webflow designer or production sites)
+- localStorage is automatically cleaned up when not on localhost to prevent performance issues
 
 ## Important Rules
 

@@ -12,7 +12,8 @@ pnpm install
 pnpm dev
 
 # Add to Webflow (for testing)
-# <script defer src="http://localhost:3000/index.js"></script>
+# Copy the head and body snippets from your terminal output
+# The terminal displays complete code snippets when you run pnpm dev
 
 # Commit and push changes
 pnpm check:fix
@@ -65,7 +66,7 @@ See [src/features/carousel/README.md](src/features/carousel/README.md) for full 
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start dev server (localhost:3000) |
+| `pnpm dev` | Start dev server (localhost:3005) |
 | `pnpm build` | Build for production |
 | `pnpm check` | Lint + type check |
 | `pnpm check:fix` | Auto-fix issues |
@@ -93,20 +94,19 @@ bin/                   # Build scripts
 
 ## Webflow Integration
 
-**Development:**
-```html
-<script defer src="http://localhost:3000/index.js"></script>
-```
+**Global Snippet (recommended):** Copy the head/body snippets from your terminal when running `pnpm dev` to automatically switch between localhost and CDN. The toggle button only appears on localhost.
 
 **Production (auto-updating):**
 ```html
-<script defer src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js"></script>
 ```
 
 **Production (pinned version):**
 ```html
-<script defer src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@v1.0.0/dist/index.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@v1.0.0/dist/index.js"></script>
 ```
+
+**Note:** The `type="module"` attribute is required for ESM code splitting.
 
 ## License
 

@@ -81,7 +81,7 @@ This codebase serves as a development framework for building scripts that will b
 │                    OUTPUT FILES                              │
 │                    (dist/*.js)                               │
 │                                                              │
-│  Development: http://localhost:3000/index.js                │
+│  Development: http://localhost:3005/index.js                │
 │  Production: https://yourdomain.com/dist/index.js           │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -136,7 +136,7 @@ The build system creates an esbuild context with the following configuration:
 **Behavior:**
 - Watches source files for changes
 - Automatically rebuilds on file save
-- Serves files via local server at `http://localhost:3000`
+- Serves files via local server at `http://localhost:3005`
 - Includes live reload functionality
 - Generates sourcemaps for debugging
 - Uses `esnext` target for modern browsers
@@ -150,9 +150,15 @@ The build system creates an esbuild context with the following configuration:
 
 **Console Output:**
 
-The development server logs a table showing all served files with their:
-- File location URLs
-- Import suggestions (script tags with proper attributes)
+The development server displays two formatted code snippets:
+1. **For `<head>`**: Complete CSS loading script with localhost/CDN fallback
+2. **Before `</body>`**: Toggle button + JS loading script with localhost/CDN fallback
+
+These snippets include:
+- Automatic localhost detection
+- localStorage cleanup when not on localhost
+- Toggle button (only visible on localhost)
+- CDN fallback if localhost is unavailable
 
 ##### Production Mode (`pnpm build`)
 
@@ -261,7 +267,7 @@ import './styles/main.css';
 
 **Output:**
 - Generates minified CSS files in the `dist` directory
-- Available at `http://localhost:3000/styles/main.css` in development
+- Available at `http://localhost:3005/index.css` in development
 
 **Webflow Integration:**
 
@@ -303,17 +309,14 @@ import './styles/main.css';
 
 2. **View Served Files:**
    The console will display a table with:
-   - File locations (e.g., `http://localhost:3000/index.js`)
+  - File locations (e.g., `http://localhost:3005/index.js`)
    - Import suggestions (ready-to-use script tags)
 
-3. **Add Script to Webflow:**
+3. **Add Webflow Custom Code Snippets:**
    - Go to your Webflow project
    - Navigate to Project Settings > Custom Code
-   - Add the script tag in the Footer Code section:
-   
-   ```html
-   <script defer src="http://localhost:3000/index.js"></script>
-   ```
+   - Copy the **head** and **before `</body>`** snippets from your terminal (displayed when running `pnpm dev`)
+   - The toggle button will **only appear when viewing on localhost** (not on Webflow designer or production)
 
 4. **Develop Your Code:**
    - Edit files in the `src/` directory
@@ -571,7 +574,7 @@ import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   // Navigate to your test page
-  await page.goto("http://localhost:3000");
+  await page.goto("http://localhost:3005");
 });
 
 test("script loads correctly", async ({ page }) => {
@@ -605,7 +608,7 @@ pnpm test --project=chromium
 
 **Integration with Development:**
 - Playwright automatically starts the dev server (`pnpm dev`)
-- Tests run against `localhost:3000`
+- Tests run against `localhost:3005`
 - Server stays running for quick test iteration
 
 ---
@@ -813,6 +816,298 @@ import { greetUser } from "$utils/greet";
 - Automatically starts dev server before tests
 - Trace collection on test failure
 - Different configs for CI vs local development
+
+---
+
+## Feature Loading Architecture
+
+### Conditional Feature Loading
+
+The codebase implements an optimized feature loading pattern that ensures features are only loaded when needed on a given page.
+
+#### Why This Matters
+
+**Performance Benefits:**
+- **Reduced Initial Bundle**: Main bundle is only ~355 bytes (minified)
+- **Code Splitting**: Features are loaded on-demand via dynamic imports
+- **Zero Overhead**: Pages without features don't download unused code
+- **Parallel Loading**: Multiple features load simultaneously when needed
+
+**Example Bundle Sizes:**
+```
+dist/
+├── index.js          (355 bytes)   ← Main bundle loaded on every page
+└── chunks/
+    └── carousel-*.js (83 KB)       ← Only loads on pages with carousels
+```
+
+#### Architecture Pattern
+
+**Location:** [src/utils/features.ts](../src/utils/features.ts)
+
+**Core Functions:**
+
+1. **`initFeature(selector, loader)`** - Conditionally loads a single feature
+2. **`initFeatures(features)`** - Loads multiple features in parallel
+
+**How It Works:**
+
+```typescript
+// 1. Check if feature elements exist in the DOM
+if (!document.querySelector('[data-slider-instance]')) {
+  return; // Exit immediately, no code loaded
+}
+
+// 2. Only if elements exist, dynamically import the feature
+const module = await import('./features/carousel');
+
+// 3. Initialize the feature
+module.init();
+```
+
+#### Implementation Guide
+
+##### Step 1: Create a Feature Module
+
+All features must export a standardized `init` function:
+
+```typescript
+// src/features/your-feature/index.ts
+export function init(): void {
+  const elements = document.querySelectorAll('[data-your-feature]');
+
+  elements.forEach(element => {
+    // Initialize your feature
+  });
+}
+```
+
+**FSD Structure:**
+```
+src/features/your-feature/
+├── index.ts    # Public API with init() function
+├── lib.ts      # Implementation logic
+├── model.ts    # Business logic & configuration
+├── types.ts    # Domain types
+└── styles.css  # Feature styles (optional)
+```
+
+##### Step 2: Register the Feature
+
+Add your feature to the main entry point:
+
+```typescript
+// src/index.ts
+import { initFeatures } from './utils/features';
+
+window.Webflow ||= [];
+window.Webflow.push(() => {
+  initFeatures([
+    ['[data-slider-instance]', () => import('./features/carousel')],
+    ['[data-your-feature]', () => import('./features/your-feature')],
+  ]);
+});
+```
+
+##### Step 3: Add HTML Attributes in Webflow
+
+In Webflow Designer, add the data attribute to elements that need the feature:
+
+```html
+<div data-your-feature>
+  <!-- Your Webflow element -->
+</div>
+```
+
+#### Real-World Example: Carousel Feature
+
+**1. Feature Module** ([src/features/carousel/index.ts](../src/features/carousel/index.ts)):
+
+```typescript
+const CAROUSEL_SELECTOR = '[data-slider-instance]';
+
+export function init(): void {
+  const elements = document.querySelectorAll<HTMLElement>(CAROUSEL_SELECTOR);
+
+  const instances = Array.from(elements)
+    .map(element => createCarousel(element))
+    .filter(instance => instance !== null);
+}
+
+// Alias for backward compatibility
+export const initCarousel = init;
+```
+
+**2. Registration** ([src/index.ts](../src/index.ts)):
+
+```typescript
+initFeatures([
+  ['[data-slider-instance]', () => import('./features/carousel')],
+]);
+```
+
+**3. Webflow HTML:**
+
+```html
+<div class="swiper"
+     data-slider-instance
+     data-slides-per-view="3">
+  <div class="swiper-wrapper">
+    <div class="swiper-slide">Slide 1</div>
+  </div>
+</div>
+```
+
+#### Error Handling
+
+The feature loader includes automatic error handling:
+
+```typescript
+try {
+  const module = await loader();
+  module.init();
+} catch (error) {
+  console.error(`Failed to initialize feature for selector "${selector}":`, error);
+  // Feature fails gracefully without breaking other features
+}
+```
+
+**Benefits:**
+- One failing feature doesn't break others
+- Errors are logged for debugging
+- Page remains functional
+
+#### Performance Characteristics
+
+**Scenario 1: Page WITHOUT Carousel**
+```
+1. Load index.js (355 bytes) ✓
+2. Run querySelectorAll('[data-slider-instance]') (~1ms)
+3. No matches found, exit immediately
+4. Total overhead: ~355 bytes + ~1ms
+```
+
+**Scenario 2: Page WITH Carousel**
+```
+1. Load index.js (355 bytes) ✓
+2. Run querySelectorAll('[data-slider-instance]') (~1ms)
+3. Match found, import carousel chunk
+4. Load carousel-*.js (83 KB) ✓
+5. Initialize carousel instances
+6. Total: 83.3 KB (loaded only on needed pages)
+```
+
+**Scenario 3: Page WITH Multiple Features**
+```
+1. Load index.js (355 bytes) ✓
+2. Check all feature selectors in parallel
+3. Import matching features simultaneously
+4. Initialize all features
+5. Total: Only loads what's needed
+```
+
+#### Build Configuration
+
+Code splitting is enabled in [bin/build.js](../bin/build.js):
+
+```javascript
+const context = await esbuild.context({
+  splitting: true,              // Enable code splitting
+  format: 'esm',               // ESM required for splitting
+  chunkNames: 'chunks/[name]-[hash]',  // Organize chunks
+  // ... other config
+});
+```
+
+**Output Structure:**
+```
+dist/
+├── index.js              # Main entry (tiny)
+├── index.css            # Compiled styles
+└── chunks/              # Feature chunks (lazy-loaded)
+    ├── carousel-*.js
+    ├── tabs-*.js
+    └── modal-*.js
+```
+
+#### Best Practices
+
+**1. Use Specific Selectors**
+```typescript
+// ✅ Good - specific and unique
+['[data-slider-instance]', () => import('./features/carousel')]
+
+// ❌ Bad - too generic
+['.swiper', () => import('./features/carousel')]
+```
+
+**2. Group Related Features**
+```typescript
+// ✅ Good - features load independently
+initFeatures([
+  ['[data-carousel]', () => import('./features/carousel')],
+  ['[data-tabs]', () => import('./features/tabs')],
+]);
+
+// ❌ Bad - all features in one module
+import './features'; // Loads everything
+```
+
+**3. Keep Chunks Focused**
+```typescript
+// ✅ Good - feature has clear responsibility
+features/carousel/     # Just carousel logic
+
+// ❌ Bad - mixed responsibilities
+features/ui-elements/  # Carousel + tabs + modal (loads all together)
+```
+
+**4. Test Performance**
+```bash
+# Check bundle sizes
+pnpm build
+du -h dist/*.js dist/chunks/*.js
+
+# Verify code splitting
+cat dist/index.js  # Should be very small
+```
+
+#### Migration Guide
+
+If you have existing features that load unconditionally:
+
+**Before:**
+```typescript
+// src/index.ts
+import { initCarousel } from './features/carousel';
+
+window.Webflow.push(() => {
+  initCarousel(); // Always runs
+});
+```
+
+**After:**
+```typescript
+// src/index.ts
+import { initFeatures } from './utils/features';
+
+window.Webflow.push(() => {
+  initFeatures([
+    ['[data-slider-instance]', () => import('./features/carousel')],
+  ]);
+});
+```
+
+**Update feature module:**
+```typescript
+// src/features/carousel/index.ts
+
+// Add standardized init export
+export const init = initCarousel;
+
+// Keep existing export for backward compatibility
+export { initCarousel };
+```
 
 ---
 
@@ -1161,7 +1456,7 @@ function calculatePrice(
 
 **Solutions:**
 - Check dev server is running (`pnpm dev`)
-- Verify `http://localhost:3000` is accessible
+- Verify `http://localhost:3005` is accessible
 - Check browser console for EventSource errors
 - Ensure you're using development script tag, not production
 

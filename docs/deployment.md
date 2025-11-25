@@ -24,15 +24,17 @@ The workflow:
 Use this for production sites that should always get the latest updates:
 
 ```html
-<script defer src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js"></script>
 <link href="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.css" rel="stylesheet" type="text/css"/>
 ```
+
+**Note:** The `type="module"` attribute is required because the build uses ESM format for code splitting.
 
 ### Pinned Version (Stable)
 Use git tags for version pinning (recommended for critical production sites):
 
 ```html
-<script defer src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@v1.0.0/dist/index.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@v1.0.0/dist/index.js"></script>
 <link href="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@v1.0.0/dist/index.css" rel="stylesheet" type="text/css"/>
 ```
 
@@ -40,9 +42,25 @@ Use git tags for version pinning (recommended for critical production sites):
 Create a `canary` branch for testing:
 
 ```html
-<script defer src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@canary/dist/index.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@canary/dist/index.js"></script>
 <link href="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@canary/dist/index.css" rel="stylesheet" type="text/css"/>
 ```
+
+### Webflow Global Custom Code Snippet
+
+Use this snippet in Webflow Project Settings → Custom Code to auto-detect between localhost and CDN assets during development.
+
+**Important Notes:**
+- The toggle button **only appears when viewing on localhost** (e.g., `localhost:3005`)
+- Toggle is **never shown** on production sites or Webflow designer
+- localStorage is **automatically cleaned up** when not on localhost to prevent performance issues
+- Use `?useLocal=1` query parameter for one-time testing without persistence
+
+**Head Code (CSS loader)** - Copy this snippet from your terminal when running `pnpm dev`
+
+**Before `</body>` Code (Toggle + JS loader)** - Copy this snippet from your terminal when running `pnpm dev`
+
+The terminal will display both snippets with proper formatting when you start the dev server.
 
 ## Versioning Strategy
 
@@ -106,14 +124,15 @@ git commit -m "fix: resolve mobile viewport overflow"
 1. **Development sites**: Use `@main` for auto-updates
 2. **Production sites**: Use `@v1.0.0` pinned versions
 3. **Testing**: Use `@canary` branch
-4. Always use `defer` on script tags for performance
-5. Place CSS in `<head>`, scripts before `</body>`
+4. Always use `type="module"` on script tags (required for code splitting)
+5. Module scripts are automatically deferred, no need for `defer` attribute
+6. Place CSS in `<head>`, scripts before `</body>`
 
 ### Cache Busting
 jsDelivr has automatic cache purging, but force update with:
 ```html
 <!-- Add ?v=timestamp for immediate updates -->
-<script src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js?v=20251031"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js?v=20251031"></script>
 ```
 
 ### Rollback Strategy
