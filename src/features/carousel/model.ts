@@ -55,27 +55,78 @@ function parseBreakpoints(value: string | undefined): SwiperOptions['breakpoints
 /**
  * Find element by selector or attribute
  * Supports both CSS selectors and data attribute values
+ * Searches within container first, then expands to document level
  */
 function findElement(
   container: HTMLElement,
   selectorOrAttribute: string | undefined,
   fallbackSelector: string
 ): HTMLElement | null {
+  console.log('[Carousel] findElement called:', {
+    selectorOrAttribute,
+    fallbackSelector,
+    containerClass: container.className,
+  });
+
   if (!selectorOrAttribute) {
-    // Use fallback class-based selector
-    return container.querySelector<HTMLElement>(fallbackSelector);
+    // Use fallback class-based selector (container only)
+    const fallbackElement = container.querySelector<HTMLElement>(fallbackSelector);
+    console.log(
+      '[Carousel] Using fallback selector:',
+      fallbackSelector,
+      'Found:',
+      !!fallbackElement
+    );
+    return fallbackElement;
   }
 
-  // First try as a data attribute value
-  const byAttribute = container.querySelector<HTMLElement>(
-    `[data-carousel-element="${selectorOrAttribute}"]`
+  // First try as a data attribute value within container
+  const attributeSelector = `[data-carousel-element="${selectorOrAttribute}"]`;
+  let byAttribute = container.querySelector<HTMLElement>(attributeSelector);
+  console.log(
+    '[Carousel] Trying attribute selector in container:',
+    attributeSelector,
+    'Found:',
+    !!byAttribute
   );
+
+  // If not found in container, search document
+  if (!byAttribute) {
+    byAttribute = document.querySelector<HTMLElement>(attributeSelector);
+    console.log(
+      '[Carousel] Trying attribute selector in document:',
+      attributeSelector,
+      'Found:',
+      !!byAttribute
+    );
+  }
+
   if (byAttribute) return byAttribute;
 
-  // Then try as a CSS selector
+  // Then try as a CSS selector within container
   try {
-    return container.querySelector<HTMLElement>(selectorOrAttribute);
-  } catch {
+    let byCSSSelector = container.querySelector<HTMLElement>(selectorOrAttribute);
+    console.log(
+      '[Carousel] Trying CSS selector in container:',
+      selectorOrAttribute,
+      'Found:',
+      !!byCSSSelector
+    );
+
+    // If not found in container, search document
+    if (!byCSSSelector) {
+      byCSSSelector = document.querySelector<HTMLElement>(selectorOrAttribute);
+      console.log(
+        '[Carousel] Trying CSS selector in document:',
+        selectorOrAttribute,
+        'Found:',
+        !!byCSSSelector
+      );
+    }
+
+    return byCSSSelector;
+  } catch (error) {
+    console.warn('[Carousel] CSS selector failed:', selectorOrAttribute, error);
     return null;
   }
 }
@@ -88,14 +139,31 @@ function buildNavigationConfig(
   element: HTMLElement,
   dataset: CarouselDataset
 ): SwiperOptions['navigation'] {
+  console.log('[Carousel] Building navigation config:', {
+    navNext: dataset.navNext,
+    navPrev: dataset.navPrev,
+  });
+
   const nextButton = findElement(element, dataset.navNext, '.slider-next');
   const prevButton = findElement(element, dataset.navPrev, '.slider-prev');
+
+  console.log('[Carousel] Navigation buttons found:', {
+    nextButton: !!nextButton,
+    prevButton: !!prevButton,
+  });
 
   if (nextButton && prevButton) {
     return {
       nextEl: nextButton,
       prevEl: prevButton,
     };
+  }
+
+  if (!nextButton || !prevButton) {
+    console.warn('[Carousel] Navigation not configured - missing buttons:', {
+      hasNext: !!nextButton,
+      hasPrev: !!prevButton,
+    });
   }
 
   return undefined;
@@ -130,6 +198,9 @@ export function buildCarouselConfig(
   element: HTMLElement,
   dataset: CarouselDataset
 ): CarouselConfig {
+  console.log('[Carousel] buildCarouselConfig called for element:', element.className);
+  console.log('[Carousel] Dataset:', dataset);
+
   const effect = dataset.effect as SwiperOptions['effect'];
 
   const centeredSlides = parseBoolean(dataset.centeredSlides);
@@ -163,6 +234,7 @@ export function buildCarouselConfig(
   if (navigation) {
     config.navigation = navigation;
     modules.push(Navigation);
+    console.log('[Carousel] Navigation module registered');
   }
 
   // Pagination (attribute-based)
@@ -170,6 +242,7 @@ export function buildCarouselConfig(
   if (pagination) {
     config.pagination = pagination;
     modules.push(Pagination);
+    console.log('[Carousel] Pagination module registered');
   }
 
   // Responsive breakpoints
@@ -177,6 +250,8 @@ export function buildCarouselConfig(
   if (breakpoints) {
     config.breakpoints = breakpoints;
   }
+
+  console.log('[Carousel] Final config:', { modules: modules.length, config });
 
   return { modules, options: config };
 }
