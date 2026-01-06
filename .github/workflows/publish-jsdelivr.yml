@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write  # Required for provenance
 
     steps:
       - name: Checkout repository
@@ -44,9 +45,7 @@ jobs:
         run: pnpm build
 
       - name: Publish to npm
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
 
       - name: Purge jsDelivr cache
         if: success()
