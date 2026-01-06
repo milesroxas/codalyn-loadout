@@ -35,6 +35,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -42,26 +43,15 @@ jobs:
       - name: Build production files
         run: pnpm build
 
-      - name: Commit and push dist files
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-
-          # Add dist files (override .gitignore)
-          git add -f dist/
-
-          # Check if there are changes to commit
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "build: update dist files for jsDelivr [skip ci]"
-            git push
-          fi
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Purge jsDelivr cache
         if: success()
         run: |
           echo "Purging jsDelivr cache..."
-          curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/dist/index.js"
-          curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/dist/index.css"
+          curl -s "https://purge.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.js"
+          curl -s "https://purge.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.css"
           echo "Cache purged successfully!"

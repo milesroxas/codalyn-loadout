@@ -98,12 +98,12 @@ bin/                   # Build scripts
 
 **Production (auto-updating):**
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.js"></script>
 ```
 
 **Production (pinned version):**
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@v1.0.0/dist/index.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/codalyn-loadout@1.0.0/dist/index.js"></script>
 ```
 
 **Note:** The `type="module"` attribute is required for ESM code splitting.

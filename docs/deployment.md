@@ -1,7 +1,7 @@
-# jsDelivr CDN Deployment Guide
+# npm + jsDelivr CDN Deployment Guide
 
 ## Overview
-This project automatically publishes compiled assets to jsDelivr CDN on every push to `main` that modifies source files. This enables seamless Webflow integration with auto-updating scripts.
+This project automatically publishes compiled assets to npm registry on every push to `main` that modifies source files. jsDelivr automatically serves these packages, enabling seamless Webflow integration with auto-updating scripts.
 
 ## How It Works
 
@@ -15,35 +15,38 @@ The GitHub workflow (`.github/workflows/publish-jsdelivr.yml`) triggers when you
 
 The workflow:
 1. Builds production assets (`pnpm build`)
-2. Commits `dist/` files back to the repository
-3. jsDelivr automatically picks up the changes from GitHub
+2. Publishes package to npm registry (`npm publish`)
+3. jsDelivr automatically mirrors the npm package within minutes
 
 ## Usage in Webflow
 
 ### Latest Version (Auto-updating)
-Use this for production sites that should always get the latest updates:
+Use this for development sites that should always get the latest updates:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js"></script>
-<link href="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.css" rel="stylesheet" type="text/css"/>
+<script type="module" src="https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.css" rel="stylesheet" type="text/css"/>
 ```
 
 **Note:** The `type="module"` attribute is required because the build uses ESM format for code splitting.
 
-### Pinned Version (Stable)
-Use git tags for version pinning (recommended for critical production sites):
+### Pinned Version (Stable - Recommended)
+Use semantic versions for version pinning (recommended for production sites):
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@v1.0.0/dist/index.js"></script>
-<link href="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@v1.0.0/dist/index.css" rel="stylesheet" type="text/css"/>
+<script type="module" src="https://cdn.jsdelivr.net/npm/codalyn-loadout@1.0.0/dist/index.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/codalyn-loadout@1.0.0/dist/index.css" rel="stylesheet" type="text/css"/>
 ```
 
-### Canary/Preview Version
-Create a `canary` branch for testing:
+### Version Ranges
+Use npm semver ranges for flexibility:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@canary/dist/index.js"></script>
-<link href="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@canary/dist/index.css" rel="stylesheet" type="text/css"/>
+<!-- Get latest 1.x version -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/codalyn-loadout@1/dist/index.js"></script>
+
+<!-- Get latest 1.0.x patch version -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/codalyn-loadout@1.0/dist/index.js"></script>
 ```
 
 ### Webflow Global Custom Code Snippet
@@ -65,22 +68,25 @@ The terminal will display both snippets with proper formatting when you start th
 ## Versioning Strategy
 
 ### Semantic Versioning
-Follow semantic versioning for git tags:
-- `v1.0.0` - Major release (breaking changes)
-- `v1.1.0` - Minor release (new features, backward compatible)
-- `v1.0.1` - Patch release (bug fixes)
+Follow semantic versioning for npm packages:
+- `1.0.0` - Major release (breaking changes)
+- `1.1.0` - Minor release (new features, backward compatible)
+- `1.0.1` - Patch release (bug fixes)
 
 ### Creating a Release
+Bump version in package.json before pushing:
 ```bash
-# Create and push a new version tag
-git tag v1.0.0
-git push origin v1.0.0
+# Update version in package.json
+npm version patch  # 1.0.0 → 1.0.1
+npm version minor  # 1.0.0 → 1.1.0
+npm version major  # 1.0.0 → 2.0.0
+
+# Push changes (workflow will auto-publish to npm)
+git push origin main
 ```
 
 ### Branch Strategy
-- `main` - Latest stable code, auto-deploys
-- `canary` - Preview/testing branch
-- `v1.x` - Version-specific branches (optional)
+- `main` - Latest stable code, auto-publishes to npm on push
 
 ## Naming Conventions
 
@@ -99,14 +105,9 @@ git commit -m "feat: add carousel navigation controls"
 git commit -m "fix: resolve mobile viewport overflow"
 ```
 
-### Git Tags
-- Use `v` prefix: `v1.0.0`, `v2.1.3`
-- Never delete published tags
-- Tag the `main` branch after merging
-
 ### File Structure
 - `src/` - Source TypeScript/CSS
-- `dist/` - Compiled output (auto-generated, committed)
+- `dist/` - Compiled output (auto-generated, published to npm only)
 - `bin/` - Build scripts
 
 ## Best Practices
@@ -117,88 +118,101 @@ git commit -m "fix: resolve mobile viewport overflow"
 3. Commit with conventional format: `git commit -m "feat: add carousel controls"`
 4. Push and create PR: `git push origin feature/carousel-controls`
 5. Merge to `main` after review
-6. Automatic deployment triggers
-7. Create version tag for stable releases
+6. Bump version if needed: `npm version patch/minor/major`
+7. Push to trigger automatic npm publish
 
 ### Webflow Integration
-1. **Development sites**: Use `@main` for auto-updates
-2. **Production sites**: Use `@v1.0.0` pinned versions
-3. **Testing**: Use `@canary` branch
+1. **Development sites**: Use `@latest` for auto-updates
+2. **Production sites**: Use `@1.0.0` pinned versions
+3. **Flexible updates**: Use `@1` for latest 1.x version
 4. Always use `type="module"` on script tags (required for code splitting)
 5. Module scripts are automatically deferred, no need for `defer` attribute
 6. Place CSS in `<head>`, scripts before `</body>`
 
 ### Cache Busting
-jsDelivr has automatic cache purging, but force update with:
+jsDelivr automatically purges cache on new npm versions, but force update with:
 ```html
 <!-- Add ?v=timestamp for immediate updates -->
-<script type="module" src="https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js?v=20251031"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.js?v=20251031"></script>
 ```
 
 ### Rollback Strategy
 If a deployment breaks production:
 ```bash
-# Revert the commit
-git revert HEAD
+# Option 1: Publish a new patch version with the fix
+npm version patch
 git push origin main
 
-# Or point Webflow to previous working tag
-# Change @main to @v1.0.0 in Webflow embed
+# Option 2: Point Webflow to previous working version
+# Change @latest to @1.0.0 in Webflow embed
 ```
+
+**Note:** npm packages cannot be unpublished after 72 hours. Always fix forward or pin to stable versions.
 
 ## CI/CD Details
 
 ### Workflow Triggers
 - ✅ Push to `main` with source file changes
 - ❌ Documentation-only changes (no trigger)
-- ❌ Dist-only commits (prevents infinite loops via `[skip ci]`)
 
 ### Build Process
 1. Checkout repository
-2. Setup pnpm 10+
-3. Install dependencies with frozen lockfile
-4. Run production build
-5. Commit dist files if changed
-6. Push back to repository
+2. Setup Node.js with npm registry authentication
+3. Setup pnpm 10+
+4. Install dependencies with frozen lockfile
+5. Run production build
+6. Publish to npm registry
 
 ### Permissions
-The workflow has `contents: write` permission to commit dist files back to the repository.
+The workflow requires an `NPM_TOKEN` secret with publish access to the `codalyn-loadout` package.
 
 ## Monitoring
 
 ### Check Deployment Status
 View workflow runs: https://github.com/milesroxas/codalyn-loadout/actions
 
+### Verify npm Package
+Check published versions: https://www.npmjs.com/package/codalyn-loadout
+
 ### Verify CDN Updates
-jsDelivr updates within 1-2 minutes of commit. Check:
+jsDelivr mirrors npm within 1-2 minutes. Check:
 ```
-https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js
+https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.js
 ```
 
 ### Debugging
 - Check GitHub Actions logs for build errors
-- Verify `dist/` files were committed
+- Verify package published to npm
 - Test CDN URL directly in browser
 - Use browser DevTools Network tab to verify loading
 
 ## Security
 
-### Secrets
-No secrets required for public repositories. The workflow uses `${{ secrets.GITHUB_TOKEN }}` which is automatically provided.
+### Secrets Required
+The workflow requires an `NPM_TOKEN` secret to publish to npm:
+
+1. Create npm access token at https://www.npmjs.com/settings/[username]/tokens
+2. Add to GitHub repository secrets: Settings → Secrets → Actions → New repository secret
+3. Name it `NPM_TOKEN` and paste the token value
 
 ### Access Control
-Only repository maintainers can push to `main`. Use branch protection rules for safety.
+- Only repository maintainers can push to `main`
+- Only users with npm publish rights can release new versions
+- Use branch protection rules for safety
 
 ## FAQ
 
 **Q: How long until changes appear on Webflow?**
-A: ~2-5 minutes (1-2 min GitHub Actions + 1-2 min jsDelivr cache)
+A: ~2-5 minutes (1-2 min GitHub Actions build + npm publish + 1-2 min jsDelivr sync)
 
-**Q: Can I use this for private repositories?**
-A: Yes, but jsDelivr won't work. Use GitHub Releases or another CDN.
+**Q: Can I use this with a private npm package?**
+A: Yes, but jsDelivr only works with public npm packages. For private packages, use a private CDN.
 
 **Q: What if the build fails?**
-A: Check GitHub Actions logs. The workflow won't commit broken builds.
+A: Check GitHub Actions logs. The workflow won't publish to npm if the build fails.
 
-**Q: Should I commit dist/ files manually?**
-A: No, the workflow handles this automatically. Keep `dist/` in `.gitignore` locally.
+**Q: Do I need to commit dist/ files?**
+A: No! dist/ files are in `.gitignore` and only published to npm, never committed to git.
+
+**Q: How do I set up npm publishing?**
+A: Create an npm account, generate an access token, and add it as `NPM_TOKEN` in GitHub secrets.

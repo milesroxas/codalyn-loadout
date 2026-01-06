@@ -25,15 +25,15 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/finsweet/developer-starter#readme",
-  "keywords": [],
+  "homepage": "https://github.com/milesroxas/codalyn-loadout#readme",
+  "keywords": ["webflow", "codalyn", "custom-scripts"],
   "license": "ISC",
-  "main": "src/index.ts",
-  "module": "src/index.ts",
-  "name": "@finsweet/developer-starter",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "name": "codalyn-loadout",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/finsweet/developer-starter.git"
+    "url": "git+https://github.com/milesroxas/codalyn-loadout.git"
   },
   "scripts": {
     "build": "cross-env NODE_ENV=production node ./bin/build.js",
@@ -49,5 +49,5 @@
     "update": "pnpm update -i -L -r"
   },
   "type": "module",
-  "version": "0.0.0"
+  "version": "1.0.0"
 }

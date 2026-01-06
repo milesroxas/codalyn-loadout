@@ -1,1 +1,0 @@
-async function t(e,r){if(document.querySelector(e))try{(await r()).init()}catch(i){console.error(`Failed to initialize feature for selector "${e}":`,i)}}async function o(e){await Promise.all(e.map(([r,i])=>t(r,i)))}window.Webflow||(window.Webflow=[]);window.Webflow.push(()=>{o([["[data-slider-instance]",()=>import("./chunks/carousel-YWMQPDQL.js")]])});

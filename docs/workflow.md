@@ -1,6 +1,6 @@
 # Development Workflow Guide
 
-Quick reference for working with this jsDelivr-integrated Webflow project.
+Quick reference for working with this npm + jsDelivr integrated Webflow project.
 
 ## TL;DR - The 4 Commands You Need
 
@@ -9,24 +9,22 @@ pnpm dev          # 1. Test locally at localhost:3005
 pnpm check:fix    # 2. Fix code quality issues
 git add src/      # 3. Stage your changes
 git commit -m "feat: description"  # 4. Commit
-pnpm push         # 5. Push → GitHub Actions builds → jsDelivr updates
+pnpm push         # 5. Push → GitHub Actions publishes to npm → jsDelivr syncs
 ```
 
-**Never commit `dist/` files manually!** GitHub Actions builds them automatically.
+**Never commit `dist/` files!** They're published to npm only, not committed to git.
 
 ---
 
-## How jsDelivr Deployment Works
+## How npm + jsDelivr Deployment Works
 
-**Important:** jsDelivr automatically serves files directly from your GitHub repository. You never need to manually upload files to jsDelivr!
+**Important:** jsDelivr automatically mirrors npm packages. You never need to manually upload files!
 
 When you push to GitHub:
 1. GitHub Actions builds your `dist/` files automatically
-2. GitHub Actions commits `dist/` back to your repo
-3. GitHub Actions purges jsDelivr cache (forces immediate update)
-4. Your changes go live **immediately** at: `https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js`
-
-**Note:** Without cache purging, jsDelivr caches files for up to 12 hours. The workflow now includes automatic cache purging for instant updates!
+2. GitHub Actions publishes package to npm registry
+3. jsDelivr automatically syncs from npm within minutes
+4. Your changes go live at: `https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.js`
 
 ## Simple 4-Step Workflow
 
@@ -63,8 +61,8 @@ pnpm push
 
 **That's it!** GitHub Actions will:
 - Build production files
-- Commit `dist/` to GitHub
-- Purge jsDelivr cache (instant updates!)
+- Publish package to npm registry
+- jsDelivr automatically mirrors from npm
 
 ---
 
@@ -72,12 +70,12 @@ pnpm push
 
 ```bash
 # Under the hood, it runs:
-git restore dist/                    # Discard local builds
-git pull --rebase origin main        # Get latest (including bot commits)
+git restore dist/                    # Discard local builds (not tracked anyway)
+git pull --rebase origin main        # Get latest changes
 git push origin main                 # Push your changes
 ```
 
-This prevents conflicts between your local builds and GitHub Actions builds.
+This ensures you're always synced with the remote before pushing.
 
 ## Complete Example Session
 
@@ -100,7 +98,7 @@ git commit -m "feat: add breakpoint configuration to carousel"
 pnpm push
 
 # 6. Wait 2-5 minutes, then test production:
-# https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist/index.js
+# https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.js
 # Hard refresh browser (Cmd+Shift+R)
 ```
 
@@ -126,11 +124,11 @@ pnpm push
 
 ### ❌ DON'T
 
-- Don't manually commit `dist/` files (GitHub Actions handles this)
+- Don't manually commit `dist/` files (they're published to npm, not git)
 - Don't use `git push` directly (use `pnpm push` instead)
 - Don't edit `dist/` files directly
 - Don't skip `pnpm check:fix` before committing
-- Don't manually upload files to jsDelivr (it mirrors GitHub automatically!)
+- Don't manually upload files to jsDelivr (it mirrors npm automatically!)
 
 ## Troubleshooting
 
@@ -160,21 +158,24 @@ pnpm push  # This handles it automatically with --rebase
 
 ### "Unstaged changes in dist/"
 
-**Problem:** You ran `pnpm dev` or `pnpm build` locally, creating dist/ files that conflict with GitHub's automated builds.
+**Problem:** You ran `pnpm dev` or `pnpm build` locally, creating dist/ files.
 
 **Solution:**
 ```bash
-git restore dist/            # Discard local builds
-pnpm push                    # Let GitHub Actions build instead
+git restore dist/            # Discard local builds (they're not tracked)
+pnpm push                    # dist/ is in .gitignore anyway
 ```
+
+**Note:** dist/ files are in `.gitignore` and never committed to git.
 
 ### Changes Not Appearing in Webflow
 
 1. Check GitHub Actions: https://github.com/milesroxas/codalyn-loadout/actions
-2. Verify the build succeeded
-3. Wait 2-5 minutes for jsDelivr cache
-4. Hard refresh in browser (Cmd+Shift+R / Ctrl+Shift+R)
-5. Check the CDN URL directly in browser
+2. Verify the build and npm publish succeeded
+3. Check npm package: https://www.npmjs.com/package/codalyn-loadout
+4. Wait 2-5 minutes for jsDelivr to sync from npm
+5. Hard refresh in browser (Cmd+Shift+R / Ctrl+Shift+R)
+6. Check the CDN URL directly in browser
 
 ### Build Failed on GitHub Actions
 
@@ -185,22 +186,26 @@ pnpm push                    # Let GitHub Actions build instead
 
 ## Version Management
 
-### Creating a Stable Release
+### Creating a New Release
 
 ```bash
-# After testing and verifying everything works
-git tag v1.0.0
-git push origin v1.0.0
+# Update version in package.json
+npm version patch   # 1.0.0 → 1.0.1
+npm version minor   # 1.0.0 → 1.1.0
+npm version major   # 1.0.0 → 2.0.0
 
-# Update Webflow to use this stable version:
-# @main → @v1.0.0
+# Push to trigger npm publish
+pnpm push
+
+# Update Webflow to use specific version:
+# @latest → @1.0.1
 ```
 
 ### Semantic Versioning
 
-- `v1.0.0` - Major (breaking changes)
-- `v1.1.0` - Minor (new features, backward compatible)
-- `v1.0.1` - Patch (bug fixes)
+- `1.0.0` - Major (breaking changes)
+- `1.1.0` - Minor (new features, backward compatible)
+- `1.0.1` - Patch (bug fixes)
 
 ## Quick Commands Reference
 
@@ -222,11 +227,11 @@ docs/             → ✅ Commit this (documentation)
 package.json      → ✅ Commit this (dependencies)
 pnpm-lock.yaml    → ✅ Commit this (lock file)
 
-dist/             → ❌ Never commit (GitHub Actions builds this)
+dist/             → ❌ Never commit (published to npm only, in .gitignore)
 node_modules/     → ❌ Never commit (gitignored)
 ```
 
-**Remember:** GitHub Actions automatically builds and commits `dist/` files. You only commit source code!
+**Remember:** GitHub Actions automatically builds and publishes `dist/` to npm. You only commit source code!
 
 ## Getting Help
 
