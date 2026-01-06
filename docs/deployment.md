@@ -164,7 +164,10 @@ git push origin main
 6. Publish to npm registry
 
 ### Permissions
-The workflow requires an `NPM_TOKEN` secret with publish access to the `codalyn-loadout` package.
+The workflow uses npm's **Trusted Publishing** via OpenID Connect (OIDC), eliminating the need for npm tokens. Authentication happens automatically through GitHub Actions when:
+- The workflow has `id-token: write` permission
+- A trusted publisher is configured on npm for this repository
+- npm is upgraded to the latest version (required for OIDC support)
 
 ## Monitoring
 
@@ -188,17 +191,33 @@ https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.js
 
 ## Security
 
-### Secrets Required
-The workflow requires an `NPM_TOKEN` secret to publish to npm:
+### Trusted Publishing Setup
+This project uses **npm Trusted Publishing** for secure, tokenless authentication:
 
-1. Create npm access token at https://www.npmjs.com/settings/[username]/tokens
-2. Add to GitHub repository secrets: Settings → Secrets → Actions → New repository secret
-3. Name it `NPM_TOKEN` and paste the token value
+**How it works:**
+- GitHub Actions authenticates to npm using OpenID Connect (OIDC)
+- No npm tokens are stored in repository secrets
+- Each publish includes cryptographically signed provenance attestation
+- Provenance is published to Sigstore's transparency log
+
+**Configuration:**
+The trusted publisher is configured on npm with:
+- **Publisher**: GitHub Actions
+- **Organization/User**: `milesroxas`
+- **Repository**: `codalyn-loadout`
+- **Workflow filename**: `publish-jsdelivr.yml`
+- **Environment name**: (blank)
+
+**Benefits:**
+- No token management or rotation needed
+- Automatic expiration of credentials
+- Built-in supply chain security via provenance
+- Reduced risk of credential leaks
 
 ### Access Control
 - Only repository maintainers can push to `main`
-- Only users with npm publish rights can release new versions
-- Use branch protection rules for safety
+- npm validates workflow identity via OIDC before allowing publish
+- Use branch protection rules for additional safety
 
 ## FAQ
 
@@ -214,5 +233,9 @@ A: Check GitHub Actions logs. The workflow won't publish to npm if the build fai
 **Q: Do I need to commit dist/ files?**
 A: No! dist/ files are in `.gitignore` and only published to npm, never committed to git.
 
-**Q: How do I set up npm publishing?**
-A: Create an npm account, generate an access token, and add it as `NPM_TOKEN` in GitHub secrets.
+**Q: How do I set up npm publishing for a new package?**
+A: Use npm Trusted Publishing (no tokens required):
+1. Create package on npm and do initial manual publish with `npm publish --access public --otp=<code>`
+2. Go to package settings → Publishing access → Add trusted publisher
+3. Configure with repository details (see Security section above)
+4. GitHub Actions will handle all future publishes automatically via OIDC
