@@ -44,9 +44,7 @@ jobs:
         run: pnpm build
 
       - name: Publish to npm
-        run: |
-          npm config set registry https://registry.npmjs.org/
-          npm publish --provenance --access public
+        run: npm publish --provenance --access public
 
       - name: Purge jsDelivr cache
         if: success()
