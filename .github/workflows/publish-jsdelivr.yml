@@ -37,11 +37,17 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build production files
         run: pnpm build
+
+      - name: Check npm version
+        run: npm --version
 
       - name: Publish to npm
         run: npm publish --provenance --access public
