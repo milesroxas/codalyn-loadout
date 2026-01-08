@@ -116,7 +116,7 @@ ${cssFiles
   .map((localUrl) => {
     const cdnUrl = localUrl.replace(
       SERVE_ORIGIN,
-      'https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist'
+      'https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist'
     );
     return `  loadCSS('${localUrl}', '${cdnUrl}');`;
   })
@@ -193,7 +193,7 @@ ${jsFiles
   .map((localUrl) => {
     const cdnUrl = localUrl.replace(
       SERVE_ORIGIN,
-      'https://cdn.jsdelivr.net/gh/milesroxas/codalyn-loadout@main/dist'
+      'https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist'
     );
     return `
   loadScript(
