@@ -41,6 +41,22 @@ export interface CarouselDataset {
 
   /** Responsive breakpoints configuration (JSON string) */
   breakpoints?: string;
+
+  // IX3 Integration attributes
+  /** Feature ID for scoping IX3 interactions (e.g., 'hero', 'testimonials') */
+  featureId?: string;
+
+  /** Enable/disable IX3 interaction events ('on' or 'true' to enable) */
+  interactionEvents?: string;
+
+  /** Custom event prefix for IX3 events (default: 'interaction') */
+  interactionPrefix?: string;
+
+  /** Custom start event name (overrides prefix) */
+  interactionEventStart?: string;
+
+  /** Custom end event name (overrides prefix) */
+  interactionEventEnd?: string;
 }
 
 /**

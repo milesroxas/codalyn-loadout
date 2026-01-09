@@ -1,5 +1,6 @@
 import Swiper from 'swiper';
 
+import { parseIX3Config, setupInteractionBridge } from './integration/interactionBridge';
 import { buildCarouselConfig } from './model';
 import type { CarouselDataset, CarouselInstance } from './types';
 
@@ -28,10 +29,21 @@ export function createCarousel(element: HTMLElement): CarouselInstance | null {
   const { modules, options } = buildCarouselConfig(element, dataset);
 
   try {
+    // Parse IX3 configuration from dataset
+    const ix3Config = parseIX3Config(dataset);
+
+    // Create Swiper instance with init: false to setup IX3 first
     const swiper = new Swiper(element, {
       ...options,
       modules,
+      init: false,
     });
+
+    // Setup IX3 integration before initialization
+    setupInteractionBridge(swiper, ix3Config);
+
+    // Initialize swiper to trigger init event
+    swiper.init();
 
     return {
       destroy: () => {
