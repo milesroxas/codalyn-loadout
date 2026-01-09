@@ -36,11 +36,12 @@ Built with FSD and DDD principles for maintainable, scalable code organization.
 
 ### Carousel Feature
 
-Pre-built Swiper carousel with type-safe configuration via data attributes:
+Pre-built Swiper carousel with type-safe configuration via data attributes and built-in Webflow IX3 (GSAP) integration:
 
 ```html
 <div class="swiper"
      data-slider-instance
+     data-feature-id="hero"
      data-slides-per-view="3"
      data-space-between="20"
      data-breakpoints='{"640":{"slidesPerView":2}}'>
@@ -50,6 +51,11 @@ Pre-built Swiper carousel with type-safe configuration via data attributes:
   </div>
 </div>
 ```
+
+**IX3 Features:**
+- Automatic state markers (`data-state="active|prev|next|inactive"`)
+- Custom event emission for GSAP animations
+- Feature ID scoping for targeted interactions
 
 See [src/features/carousel/README.md](src/features/carousel/README.md) for full documentation.
 
@@ -79,11 +85,17 @@ See [src/features/carousel/README.md](src/features/carousel/README.md) for full 
 src/
 ├── features/           # Feature modules (FSD)
 │   └── carousel/
-│       ├── index.ts   # Public API
-│       ├── lib.ts     # Implementation
-│       ├── model.ts   # Business logic
-│       ├── types.ts   # Domain types
-│       └── README.md  # Feature docs
+│       ├── index.ts           # Public API
+│       ├── lib.ts             # Implementation
+│       ├── model.ts           # Business logic
+│       ├── types.ts           # Domain types
+│       ├── integration/       # IX3 integration
+│       └── README.md          # Feature docs
+├── shared/            # Shared infrastructure
+│   └── interaction-bridge/   # Webflow IX3 integration
+│       ├── emit.ts           # Event emission
+│       ├── state.ts          # State management
+│       └── index.ts          # Public API
 ├── utils/             # Shared utilities
 └── index.ts           # Entry point
 

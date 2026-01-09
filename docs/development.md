@@ -623,14 +623,28 @@ codalyn-loadout/
 │
 ├── dist/                         # Build output (gitignored)
 │   ├── index.js                  # Compiled JavaScript
+│   ├── index.css                 # Compiled CSS
+│   ├── chunks/                   # Code-split chunks
 │   └── index.js.map              # Sourcemaps (dev only)
 │
 ├── src/                          # Source code
 │   ├── index.ts                  # Main entry point
 │   ├── features/                 # Feature modules
 │   │   └── carousel/             # Carousel component
+│   │       ├── index.ts          # Public API
+│   │       ├── lib.ts            # Implementation
+│   │       ├── model.ts          # Configuration
+│   │       ├── types.ts          # Domain types
+│   │       ├── integration/      # IX3 integration
+│   │       └── README.md         # Feature docs
+│   ├── shared/                   # Shared infrastructure
+│   │   └── interaction-bridge/  # Webflow IX3 integration
+│   │       ├── emit.ts           # Event emission
+│   │       ├── state.ts          # State management
+│   │       └── index.ts          # Public API
 │   └── utils/                    # Utility modules
-│       └── greet.ts              # Example utility
+│       ├── greet.ts              # Example utility
+│       └── features.ts           # Feature loader
 │
 ├── tests/                        # Playwright tests
 │   └── example.spec.ts           # Test specifications
@@ -1108,6 +1122,117 @@ export const init = initCarousel;
 // Keep existing export for backward compatibility
 export { initCarousel };
 ```
+
+---
+
+## Webflow IX3 Integration
+
+### Shared Interaction Bridge
+
+The project includes a shared interaction bridge (`src/shared/interaction-bridge/`) that provides standardized integration with Webflow's GSAP (IX3) system. This infrastructure enables features to emit custom events and apply state markers for GSAP animations.
+
+#### Core Components
+
+**Event Emission** ([src/shared/interaction-bridge/emit.ts](../src/shared/interaction-bridge/emit.ts)):
+- Safe, environment-aware IX3 event triggering
+- Automatic caching of Webflow IX3 API
+- No-op behavior when IX3 is unavailable
+
+**State Management** ([src/shared/interaction-bridge/state.ts](../src/shared/interaction-bridge/state.ts)):
+- Consistent DOM state marker application
+- Supports custom state attribute names
+- Helpers for setting, clearing, and getting state values
+
+#### Usage Example
+
+```typescript
+import { emit, setState } from '../../shared/interaction-bridge';
+
+// Emit a custom IX3 event
+emit('state-change:start', {
+  featureId: 'hero',
+  slideIndex: 0
+});
+
+// Apply state markers to elements
+const slides = carousel.querySelectorAll('.slide');
+setState(slides, {
+  active: 0,
+  prev: 2,
+  next: 1
+});
+```
+
+#### Carousel IX3 Integration
+
+The carousel feature demonstrates how to integrate with the interaction bridge:
+
+**Location:** [src/features/carousel/integration/interactionBridge.ts](../src/features/carousel/integration/interactionBridge.ts)
+
+**Features:**
+- Translates Swiper events to IX3 events
+- Applies `data-state` attributes to slides
+- Supports custom event names and feature IDs
+- Handles looping carousels correctly
+
+**HTML Configuration:**
+```html
+<div
+  data-slider-instance
+  data-feature-id="hero"
+  data-interaction-prefix="carousel"
+  class="swiper">
+  <div class="swiper-wrapper">
+    <div class="swiper-slide">Slide 1</div>
+  </div>
+</div>
+```
+
+**Webflow IX3 Setup:**
+1. Create interaction with trigger: Custom event `interaction:state-change:start`
+2. Target: `[data-feature-id="hero"] [data-state="active"] .your-element`
+3. Add GSAP animation (fade, slide, scale, etc.)
+
+#### Building New Features with IX3
+
+When creating new features that need IX3 integration:
+
+1. **Import the bridge:**
+   ```typescript
+   import { emit, setState } from '../../shared/interaction-bridge';
+   ```
+
+2. **Emit events at lifecycle points:**
+   ```typescript
+   // On feature initialization
+   emit('init', { type: 'your-feature', featureId: 'feature-1' });
+
+   // On state changes
+   emit('state-change:start', { featureId: 'feature-1', data: {} });
+   ```
+
+3. **Apply state markers:**
+   ```typescript
+   const items = feature.querySelectorAll('.item');
+   setState(items, { active: newIndex });
+   ```
+
+4. **Support configuration via data attributes:**
+   ```typescript
+   interface FeatureDataset {
+     featureId?: string;
+     interactionEvents?: string;
+     interactionPrefix?: string;
+   }
+   ```
+
+#### Best Practices
+
+1. **Use canonical event names** - Start with `interaction:*` prefix unless feature-specific
+2. **Include feature IDs** - Always emit feature IDs in event payloads for scoping
+3. **State markers before events** - Apply DOM state changes before emitting events
+4. **Support opt-out** - Allow disabling IX3 events via configuration
+5. **Handle unavailability** - The bridge handles missing IX3 gracefully
 
 ---
 
