@@ -26,7 +26,11 @@
     "dist"
   ],
   "homepage": "https://github.com/milesroxas/codalyn-loadout#readme",
-  "keywords": ["webflow", "codalyn", "custom-scripts"],
+  "keywords": [
+    "webflow",
+    "codalyn",
+    "custom-scripts"
+  ],
   "license": "ISC",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -49,5 +53,5 @@
     "update": "pnpm update -i -L -r"
   },
   "type": "module",
-  "version": "1.0.8"
+  "version": "1.1.0"
 }
