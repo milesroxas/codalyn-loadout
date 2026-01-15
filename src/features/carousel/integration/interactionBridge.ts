@@ -240,7 +240,7 @@ interface IX3Dataset {
  * @returns IX3 configuration
  */
 export function parseIX3Config(dataset: IX3Dataset): IX3Config {
-  console.log('[Carousel] Parsing IX3 config from dataset:', dataset);
+  // console.log('[Carousel] Parsing IX3 config from dataset:', dataset);
 
   const config: IX3Config = {};
 
