@@ -23,7 +23,10 @@
     "pnpm": ">=10"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "src/**/README.md",
+    "docs/**/*.md"
   ],
   "homepage": "https://github.com/milesroxas/codalyn-loadout#readme",
   "keywords": [

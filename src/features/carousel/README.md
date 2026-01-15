@@ -54,54 +54,74 @@ window.Webflow.push(() => {
 });
 ```
 
-## IX3 Integration (Webflow GSAP Animations)
+## Animation Approach: CSS First
 
-The carousel includes **opt-in** integration with Webflow's IX3 (GSAP) system, allowing you to create custom animations triggered by slide changes.
-
-**Note:** IX3 event emission is disabled by default. You must explicitly enable it with `data-interaction-events="true"` to use IX3 animations.
+**Recommended**: Use CSS-based animations for slide state changes. CSS transitions and animations are more performant, easier to maintain, and work reliably with Swiper's dynamic slide updates.
 
 ### Automatic State Markers
 
-Each slide **always** receives a `data-state` attribute that updates as the carousel navigates (regardless of IX3 event settings):
+Each slide **always** receives a `data-state` attribute that updates as the carousel navigates:
 
 - `data-state="active"` - Currently visible slide
 - `data-state="prev"` - Previous slide (wraps with loop enabled)
 - `data-state="next"` - Next slide (wraps with loop enabled)
 - `data-state="inactive"` - All other slides
 
-### IX3 Events
+### CSS-Based Animations (Recommended)
 
-When `data-interaction-events="true"` is set, the carousel emits custom events to Webflow IX3:
-
-- `interaction:init` - When carousel initializes
-- `interaction:state-change:start` - When slide change begins
-- `interaction:state-change:end` - When slide change completes
-
-**Important:** These events are only emitted when explicitly enabled. If you're using CSS transitions only (without IX3), leave this attribute off.
-
-### Targeting Slides in Webflow IX3
-
-Use state markers to target slides for animations:
+Use `data-state` attributes to create smooth, performant animations:
 
 ```css
-/* Target active slide */
-[data-slider-instance] [data-state="active"] .your-element
+/* Fade in active slide */
+.swiper-slide {
+  opacity: 0.3;
+  transition: opacity 0.4s ease;
+}
 
-/* Target with specific carousel instance */
-[data-slider-instance="hero"] [data-state="active"] .your-element
+.swiper-slide[data-state="active"] {
+  opacity: 1;
+}
 
-/* Target previous/next slides */
-[data-slider-instance] [data-state="prev"] .your-element
-[data-slider-instance] [data-state="next"] .your-element
+/* Animate elements inside slides */
+.swiper-slide .slide-title {
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swiper-slide[data-state="active"] .slide-title {
+  transform: translateY(0);
+  opacity: 1;
+}
 ```
 
-### IX3 Configuration Attributes
+**Benefits of CSS animations:**
+- Better performance (GPU-accelerated)
+- No JavaScript overhead
+- Works reliably with Swiper's dynamic DOM updates
+- Easier to maintain and debug
+- No IX3 limitations
+
+### IX3 Integration (Limited Use Cases)
+
+**Important Limitation**: Webflow's IX3 does not update animations on reference target elements when their attributes change. This means IX3 animations **will not trigger** when slide `data-state` attributes update.
+
+**When to use IX3 with carousels:**
+- Global carousel events (initialization, destroy)
+- Animations on static elements outside the carousel
+- One-time animations that don't depend on slide state changes
+
+**When NOT to use IX3:**
+- Animating slide content based on active/inactive state (use CSS instead)
+- Per-slide animations (use CSS instead)
+- Any animation that needs to respond to `data-state` changes (use CSS instead)
+
+### IX3 Configuration (Global Events Only)
 
 ```html
 <div
   data-slider-instance="hero"
   data-interaction-events="true"
-  data-interaction-prefix="carousel"
   class="swiper">
   <div class="swiper-wrapper"><!-- slides --></div>
 </div>
@@ -109,58 +129,40 @@ Use state markers to target slides for animations:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `data-slider-instance` | string | **Required.** Unique identifier for the carousel. Also used as feature ID for IX3 scoping (e.g., "hero", "events", "testimonials") |
-| `data-interaction-events` | string | **Opt-in.** Enable IX3 events ("on" or "true"). Default: disabled. Must be explicitly enabled to emit events. |
+| `data-slider-instance` | string | **Required.** Unique identifier for the carousel |
+| `data-interaction-events` | string | **Opt-in.** Enable IX3 events ("on" or "true"). Default: disabled |
 | `data-interaction-prefix` | string | Custom event prefix (default: "interaction") |
-| `data-interaction-event-start` | string | Custom start event name (overrides prefix) |
-| `data-interaction-event-end` | string | Custom end event name (overrides prefix) |
 
-**Example with IX3 enabled and custom events:**
+**Available IX3 Events:**
+- `interaction:init` - When carousel initializes (emitted once)
+
+**Example: Animate a header when carousel initializes**
 
 ```html
+<!-- Carousel -->
 <div
   data-slider-instance="hero"
   data-interaction-events="true"
-  data-interaction-event-start="hero-slide-start"
-  data-interaction-event-end="hero-slide-end"
   class="swiper">
+  <div class="swiper-wrapper"><!-- slides --></div>
+</div>
+
+<!-- Static element outside carousel -->
+<div class="page-header">Welcome</div>
 ```
 
-### Webflow IX3 Setup Example
+In Webflow IX3:
+1. Create interaction with trigger: Custom event `interaction:init`
+2. Target: `.page-header`
+3. Animation: Fade in or slide down
 
-1. In Webflow, create an interaction with trigger: Custom event `interaction:state-change:start`
-2. Target: `[data-slider-instance="hero"] [data-state="active"] .slide-title`
-3. Animation: Fade in, slide up, or any GSAP animation
+### Best Practices
 
-The title will animate every time a slide becomes active.
-
-### Event Payloads
-
-Events include useful data:
-
-```typescript
-// interaction:init
-{
-  type: 'carousel',
-  featureId: 'hero' // Value from data-slider-instance
-}
-
-// interaction:state-change:start / end
-{
-  type: 'carousel',
-  featureId: 'hero', // Value from data-slider-instance
-  slideIndex: 0 // Current active slide index
-}
-```
-
-### Best Practices for IX3
-
-1. **Enable When Needed**: Only add `data-interaction-events="true"` if you're using Webflow IX3 animations
-2. **CSS-Only Transitions**: If using only CSS transitions (no IX3), omit the `data-interaction-events` attribute to avoid unnecessary event emissions
-3. **Use Descriptive Instance Names**: Set `data-slider-instance="hero"` to identify and scope your carousels
-4. **Target by State**: Use `[data-state="active"]` instead of Swiper's dynamic classes (works with or without IX3)
-5. **Scope Your Selectors**: Combine instance name and state for precise targeting: `[data-slider-instance="hero"] [data-state="active"]`
-6. **Start with Canonical Events**: Use default `interaction:*` events unless you need custom ones
+1. **Prefer CSS**: Use CSS transitions/animations for all slide-related animations
+2. **Use IX3 Sparingly**: Only use IX3 for global carousel events or static elements
+3. **Target by State**: Use `[data-state="active"]` in CSS selectors
+4. **Scope Your Selectors**: Combine instance name and state: `[data-slider-instance="hero"] [data-state="active"]`
+5. **Performance**: CSS animations are GPU-accelerated and more efficient than IX3
 
 ## Configuration via Data Attributes
 
