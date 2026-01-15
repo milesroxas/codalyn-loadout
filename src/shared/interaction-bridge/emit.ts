@@ -9,7 +9,9 @@
  * IX3 API interface from Webflow
  */
 interface IX3API {
-  trigger: (eventName: string, payload?: unknown) => void;
+  emit: (eventName: string, payload?: unknown) => void;
+  destroy: () => void;
+  ready: () => Promise<void>;
 }
 
 /**
@@ -22,33 +24,30 @@ interface WebflowGlobal {
 declare const Webflow: WebflowGlobal | undefined;
 
 /**
- * Cached IX3 instance
- * Resolved once on first emit call to avoid repeated lookups
- */
-let ix3Cache: IX3API | null | undefined;
-
-/**
- * Resolve and cache IX3 API
- * Returns null if IX3 is unavailable, caches the result
+ * Resolve IX3 API from Webflow
+ * Returns null if IX3 is unavailable
+ *
+ * Note: We resolve fresh on each call to ensure we always have the current IX3 instance.
+ * This follows Webflow's recommended pattern: Webflow.require('ix3').emit(...)
  */
 function resolveIX3(): IX3API | null {
-  // Return cached result if already resolved
-  if (ix3Cache !== undefined) {
-    return ix3Cache;
-  }
-
   // Check if running in Webflow environment
   if (typeof Webflow === 'undefined' || typeof Webflow.require !== 'function') {
-    ix3Cache = null;
+    console.warn('[IX3] Webflow not available in this environment');
     return null;
   }
 
   try {
     const ix3 = Webflow.require('ix3');
-    ix3Cache = ix3 || null;
-    return ix3Cache;
-  } catch {
-    ix3Cache = null;
+
+    if (!ix3) {
+      console.warn('[IX3] Webflow.require("ix3") returned undefined');
+      return null;
+    }
+
+    return ix3;
+  } catch (error) {
+    console.error('[IX3] Failed to load IX3 API:', error);
     return null;
   }
 }
@@ -84,6 +83,7 @@ export function emit(eventName: string, payload?: unknown): void {
   const ix3 = resolveIX3();
 
   if (!ix3) {
+    console.warn('[IX3] Cannot emit event - IX3 not available:', eventName);
     return;
   }
 
@@ -93,17 +93,89 @@ export function emit(eventName: string, payload?: unknown): void {
       ? eventName
       : `interaction:${eventName}`;
 
-    ix3.trigger(normalizedName, payload);
+    console.log('[IX3] 📤 Emitting event:', normalizedName, payload ? payload : '(no payload)');
+
+    // Emit the event - IX3 will handle animation based on Webflow Designer configuration
+    ix3.emit(normalizedName, payload);
+
+    console.log('[IX3] ✓ Event emitted successfully');
   } catch (error) {
-    console.warn('[InteractionBridge] Failed to emit event:', eventName, error);
+    console.error('[IX3] ❌ Failed to emit event:', eventName, error);
   }
 }
 
 /**
- * Reset the IX3 cache
- * Primarily for testing purposes
- * @internal
+ * Emit a per-slide interaction event with unique event names
+ *
+ * This helper generates unique event names for each slide, allowing you to create
+ * specific Webflow interactions for individual slides.
+ *
+ * @param slideIndex - Current slide index (0-based)
+ * @param totalSlides - Total number of slides
+ * @param options - Configuration options
+ *
+ * @example
+ * ```ts
+ * // Emit event for slide 2 out of 5 slides
+ * emitPerSlide(1, 5, {
+ *   eventPattern: 'state-change:start-slide-{index}',
+ *   featureId: 'hero'
+ * });
+ * // Emits: "interaction:state-change:start-slide-1"
+ *
+ * // With 1-based indexing
+ * emitPerSlide(0, 5, {
+ *   eventPattern: 'slide-{index}',
+ *   oneBasedIndex: true
+ * });
+ * // Emits: "interaction:slide-1"
+ * ```
  */
-export function resetCache(): void {
-  ix3Cache = undefined;
+export function emitPerSlide(
+  slideIndex: number,
+  totalSlides: number,
+  options: {
+    /** Event name pattern with {index} placeholder (e.g., 'state-change:start-slide-{index}') */
+    eventPattern: string;
+    /** Use 1-based index instead of 0-based (default: false) */
+    oneBasedIndex?: boolean;
+    /** Optional feature ID to include in payload */
+    featureId?: string;
+  }
+): void {
+  const ix3 = resolveIX3();
+
+  if (!ix3) {
+    console.warn('[IX3] Cannot emit per-slide event - IX3 not available');
+    return;
+  }
+
+  try {
+    // Calculate the index to use in the event name
+    const displayIndex = options.oneBasedIndex ? slideIndex + 1 : slideIndex;
+
+    // Replace {index} placeholder with actual index
+    const eventName = options.eventPattern.replace('{index}', displayIndex.toString());
+
+    // Normalize event name - add interaction: prefix if not present
+    const normalizedName = eventName.startsWith('interaction:')
+      ? eventName
+      : `interaction:${eventName}`;
+
+    const payload = {
+      slideIndex,
+      totalSlides,
+      ...(options.featureId && { featureId: options.featureId }),
+    };
+
+    console.log('[IX3] 📤 Emitting per-slide event:', normalizedName, payload);
+
+    // Emit the event
+    ix3.emit(normalizedName, payload);
+
+    console.log('[IX3] ✓ Per-slide event emitted successfully');
+  } catch (error) {
+    console.error('[IX3] ❌ Failed to emit per-slide event:', error);
+  }
 }
+

@@ -11,7 +11,7 @@
  */
 
 // Event emission
-export { emit, isAvailable, resetCache } from './emit';
+export { emit, emitPerSlide, isAvailable } from './emit';
 export type { StateAssignment, StateConfig, StateValue } from './state';
 // State management
 export { clearState, getState, setState } from './state';

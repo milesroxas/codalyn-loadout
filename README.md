@@ -40,8 +40,7 @@ Pre-built Swiper carousel with type-safe configuration via data attributes and b
 
 ```html
 <div class="swiper"
-     data-slider-instance
-     data-feature-id="hero"
+     data-slider-instance="hero"
      data-slides-per-view="3"
      data-space-between="20"
      data-breakpoints='{"640":{"slidesPerView":2}}'>
@@ -55,7 +54,7 @@ Pre-built Swiper carousel with type-safe configuration via data attributes and b
 **IX3 Features:**
 - Automatic state markers (`data-state="active|prev|next|inactive"`)
 - Custom event emission for GSAP animations
-- Feature ID scoping for targeted interactions
+- Instance-based scoping for targeted interactions
 
 See [src/features/carousel/README.md](src/features/carousel/README.md) for full documentation.
 

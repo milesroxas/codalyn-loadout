@@ -36,55 +36,76 @@ function calculateIndices(
   activeIndex: number,
   totalSlides: number,
   loop: boolean
-): { prev: number; next: number } {
+): { prev: number | undefined; next: number | undefined } {
   if (loop) {
+    // Handle single slide edge case - no prev/next for a single slide
+    if (totalSlides === 1) {
+      return { prev: undefined, next: undefined };
+    }
+
     // With loop enabled, wrap around
     const prev = (activeIndex - 1 + totalSlides) % totalSlides;
     const next = (activeIndex + 1) % totalSlides;
     return { prev, next };
   }
 
-  // Without loop, clamp to boundaries
-  const prev = Math.max(0, activeIndex - 1);
-  const next = Math.min(totalSlides - 1, activeIndex + 1);
+  // Without loop, only set prev/next if they're different from active
+  // This prevents the same slide from having multiple states
+  const prev = activeIndex > 0 ? activeIndex - 1 : undefined;
+  const next = activeIndex < totalSlides - 1 ? activeIndex + 1 : undefined;
   return { prev, next };
 }
 
 /**
  * Apply state markers to slides based on Swiper's active index
  */
-function applySlideStates(swiper: Swiper): void {
-  const slides = swiper.slides;
+function applySlideStates(swiper: Swiper, featureId?: string): void {
+  // Get all slides from the wrapper (excludes duplicate slides in loop mode)
+  const wrapper = swiper.wrapperEl;
+  const slides = wrapper ? Array.from(wrapper.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)')) : [];
+
+  // Safety check for empty carousel
+  if (!slides || slides.length === 0) {
+    console.warn('[Carousel] No slides found, skipping state application');
+    return;
+  }
+
   const realIndex = swiper.realIndex; // Use realIndex for looping carousels
   const totalSlides = slides.length;
   const loop = swiper.params.loop || false;
 
+  const isEventsInstance = featureId === 'events';
+
+  if (isEventsInstance) {
+    console.log('[Carousel:events] Applying slide states - Current index:', realIndex, 'Total:', totalSlides, 'Loop:', loop);
+  }
+
   const { prev, next } = calculateIndices(realIndex, totalSlides, loop);
+
+  if (isEventsInstance) {
+    console.log('[Carousel:events] Calculated indices - Active:', realIndex, 'Prev:', prev, 'Next:', next);
+  }
 
   setState(slides, {
     active: realIndex,
     prev,
     next,
-  });
+  }, { logForFeature: isEventsInstance ? 'events' : undefined });
 }
 
 /**
  * Get event names based on configuration
  */
 function getEventNames(config: IX3Config): { start: string; end: string } {
-  // Use custom event names if provided
-  if (config.eventStart && config.eventEnd) {
-    return {
-      start: config.eventStart,
-      end: config.eventEnd,
-    };
-  }
-
-  // Use prefix to build event names
+  // Use prefix to build default event names
   const prefix = config.eventPrefix || 'interaction';
+  const defaultStart = `${prefix}:state-change:start`;
+  const defaultEnd = `${prefix}:state-change:end`;
+
+  // Allow custom event names to override defaults
   return {
-    start: `${prefix}:state-change:start`,
-    end: `${prefix}:state-change:end`,
+    start: config.eventStart || defaultStart,
+    end: config.eventEnd || defaultEnd,
   };
 }
 
@@ -109,16 +130,40 @@ function getEventNames(config: IX3Config): { start: string; end: string } {
  * ```
  */
 export function setupInteractionBridge(swiper: Swiper, config: IX3Config = {}): void {
-  // Skip if explicitly disabled
-  if (config.enabled === false) {
+  // Only log for 'events' instance to reduce noise
+  const isEventsInstance = config.featureId === 'events';
+
+  if (isEventsInstance) {
+    console.log('[Carousel:events] Setting up interaction bridge with config:', config);
+  }
+
+  // Skip if not explicitly enabled (opt-in behavior)
+  if (config.enabled !== true) {
+    if (isEventsInstance) {
+      console.log('[Carousel:events] Interaction bridge not enabled - skipping event emission');
+    }
     return;
   }
 
   const eventNames = getEventNames(config);
+  if (isEventsInstance) {
+    console.log('[Carousel:events] Event names configured:', eventNames);
+  }
 
-  // Apply initial state markers on init
+  // Apply initial state markers BEFORE init to prevent CSS transition on first slide
+  // This ensures the first slide starts with data-state="active" already applied
+  swiper.on('beforeInit', () => {
+    if (isEventsInstance) {
+      console.log('[Carousel:events] 🎬 Swiper before init - applying initial states');
+    }
+    applySlideStates(swiper, config.featureId);
+  });
+
+  // Emit init event after Swiper is ready
   swiper.on('init', () => {
-    applySlideStates(swiper);
+    if (isEventsInstance) {
+      console.log('[Carousel:events] 🎬 Swiper initialized');
+    }
 
     // Emit init event
     emit('init', {
@@ -129,24 +174,42 @@ export function setupInteractionBridge(swiper: Swiper, config: IX3Config = {}): 
 
   // Update state markers when slide changes start
   swiper.on('slideChangeTransitionStart', () => {
-    applySlideStates(swiper);
+    if (isEventsInstance) {
+      console.log(`[Carousel:events] 🔄 Slide change transition started - Moving to slide: ${swiper.realIndex}`);
+    }
 
-    // Emit state change start event
+    // Apply the new state markers FIRST
+    // This ensures the new active slide has data-state="active" before IX3 animations trigger
+    applySlideStates(swiper, config.featureId);
+
+    // Emit event - IX3 will query for [data-state="active"] based on Webflow Designer configuration
     emit(eventNames.start, {
       featureId: config.featureId,
       slideIndex: swiper.realIndex,
       type: 'carousel',
     });
+
+    if (isEventsInstance) {
+      console.log(`[Carousel:events] ✓ State applied and event emitted`);
+    }
   });
 
   // Optional: emit event when slide change ends
   swiper.on('slideChangeTransitionEnd', () => {
+    if (isEventsInstance) {
+      console.log('[Carousel:events] ✓ Slide change transition completed - Now at slide:', swiper.realIndex);
+    }
+
     emit(eventNames.end, {
       featureId: config.featureId,
       slideIndex: swiper.realIndex,
       type: 'carousel',
     });
   });
+
+  if (isEventsInstance) {
+    console.log('[Carousel:events] ✓ Interaction bridge setup complete');
+  }
 }
 
 /**
@@ -154,6 +217,7 @@ export function setupInteractionBridge(swiper: Swiper, config: IX3Config = {}): 
  * Subset of dataset attributes needed for IX3 integration
  */
 interface IX3Dataset {
+  sliderInstance?: string;
   featureId?: string;
   interactionEvents?: string;
   interactionPrefix?: string;
@@ -165,7 +229,8 @@ interface IX3Dataset {
  * Parse IX3 configuration from element dataset
  *
  * Maps data attributes to IX3Config:
- * - data-feature-id → featureId
+ * - data-slider-instance → featureId (primary, for backwards compatibility)
+ * - data-feature-id → featureId (fallback, deprecated)
  * - data-interaction-events → enabled
  * - data-interaction-prefix → eventPrefix
  * - data-interaction-event-start → eventStart
@@ -175,9 +240,15 @@ interface IX3Dataset {
  * @returns IX3 configuration
  */
 export function parseIX3Config(dataset: IX3Dataset): IX3Config {
+  console.log('[Carousel] Parsing IX3 config from dataset:', dataset);
+
   const config: IX3Config = {};
 
-  if (dataset.featureId) {
+  // Use sliderInstance as the primary feature ID
+  // Falls back to featureId for backwards compatibility
+  if (dataset.sliderInstance) {
+    config.featureId = dataset.sliderInstance;
+  } else if (dataset.featureId) {
     config.featureId = dataset.featureId;
   }
 
@@ -196,6 +267,8 @@ export function parseIX3Config(dataset: IX3Dataset): IX3Config {
   if (dataset.interactionEventEnd) {
     config.eventEnd = dataset.interactionEventEnd;
   }
+
+  console.log('[Carousel] Parsed IX3 config:', config);
 
   return config;
 }

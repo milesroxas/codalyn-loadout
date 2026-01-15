@@ -9,7 +9,11 @@
  * Represents our domain model for how carousels are configured in HTML
  */
 export interface CarouselDataset {
-  /** Instance identifier for the carousel */
+  /**
+   * Instance identifier for the carousel (required)
+   * Also used as the feature ID for IX3 event scoping and logging
+   * Examples: 'hero', 'events', 'testimonials'
+   */
   sliderInstance?: string;
 
   /** Visual effect for slide transitions */
@@ -43,7 +47,10 @@ export interface CarouselDataset {
   breakpoints?: string;
 
   // IX3 Integration attributes
-  /** Feature ID for scoping IX3 interactions (e.g., 'hero', 'testimonials') */
+  /**
+   * @deprecated Use sliderInstance instead
+   * Feature ID for scoping IX3 interactions (e.g., 'hero', 'testimonials')
+   */
   featureId?: string;
 
   /** Enable/disable IX3 interaction events ('on' or 'true' to enable) */

@@ -56,11 +56,13 @@ window.Webflow.push(() => {
 
 ## IX3 Integration (Webflow GSAP Animations)
 
-The carousel includes built-in integration with Webflow's IX3 (GSAP) system, allowing you to create custom animations triggered by slide changes.
+The carousel includes **opt-in** integration with Webflow's IX3 (GSAP) system, allowing you to create custom animations triggered by slide changes.
+
+**Note:** IX3 event emission is disabled by default. You must explicitly enable it with `data-interaction-events="true"` to use IX3 animations.
 
 ### Automatic State Markers
 
-Each slide automatically receives a `data-state` attribute that updates as the carousel navigates:
+Each slide **always** receives a `data-state` attribute that updates as the carousel navigates (regardless of IX3 event settings):
 
 - `data-state="active"` - Currently visible slide
 - `data-state="prev"` - Previous slide (wraps with loop enabled)
@@ -69,11 +71,13 @@ Each slide automatically receives a `data-state` attribute that updates as the c
 
 ### IX3 Events
 
-The carousel emits custom events to Webflow IX3:
+When `data-interaction-events="true"` is set, the carousel emits custom events to Webflow IX3:
 
 - `interaction:init` - When carousel initializes
 - `interaction:state-change:start` - When slide change begins
 - `interaction:state-change:end` - When slide change completes
+
+**Important:** These events are only emitted when explicitly enabled. If you're using CSS transitions only (without IX3), leave this attribute off.
 
 ### Targeting Slides in Webflow IX3
 
@@ -83,8 +87,8 @@ Use state markers to target slides for animations:
 /* Target active slide */
 [data-slider-instance] [data-state="active"] .your-element
 
-/* Target with feature ID scope */
-[data-feature-id="hero"] [data-state="active"] .your-element
+/* Target with specific carousel instance */
+[data-slider-instance="hero"] [data-state="active"] .your-element
 
 /* Target previous/next slides */
 [data-slider-instance] [data-state="prev"] .your-element
@@ -95,8 +99,8 @@ Use state markers to target slides for animations:
 
 ```html
 <div
-  data-slider-instance
-  data-feature-id="hero"
+  data-slider-instance="hero"
+  data-interaction-events="true"
   data-interaction-prefix="carousel"
   class="swiper">
   <div class="swiper-wrapper"><!-- slides --></div>
@@ -105,18 +109,18 @@ Use state markers to target slides for animations:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `data-feature-id` | string | Unique identifier for scoping (e.g., "hero", "testimonials") |
-| `data-interaction-events` | string | Enable/disable IX3 events ("on", "true", or "false") |
+| `data-slider-instance` | string | **Required.** Unique identifier for the carousel. Also used as feature ID for IX3 scoping (e.g., "hero", "events", "testimonials") |
+| `data-interaction-events` | string | **Opt-in.** Enable IX3 events ("on" or "true"). Default: disabled. Must be explicitly enabled to emit events. |
 | `data-interaction-prefix` | string | Custom event prefix (default: "interaction") |
 | `data-interaction-event-start` | string | Custom start event name (overrides prefix) |
 | `data-interaction-event-end` | string | Custom end event name (overrides prefix) |
 
-**Example with custom events:**
+**Example with IX3 enabled and custom events:**
 
 ```html
 <div
-  data-slider-instance
-  data-feature-id="hero"
+  data-slider-instance="hero"
+  data-interaction-events="true"
   data-interaction-event-start="hero-slide-start"
   data-interaction-event-end="hero-slide-end"
   class="swiper">
@@ -125,7 +129,7 @@ Use state markers to target slides for animations:
 ### Webflow IX3 Setup Example
 
 1. In Webflow, create an interaction with trigger: Custom event `interaction:state-change:start`
-2. Target: `[data-feature-id="hero"] [data-state="active"] .slide-title`
+2. Target: `[data-slider-instance="hero"] [data-state="active"] .slide-title`
 3. Animation: Fade in, slide up, or any GSAP animation
 
 The title will animate every time a slide becomes active.
@@ -138,23 +142,25 @@ Events include useful data:
 // interaction:init
 {
   type: 'carousel',
-  featureId: 'hero' // if data-feature-id is set
+  featureId: 'hero' // Value from data-slider-instance
 }
 
 // interaction:state-change:start / end
 {
   type: 'carousel',
-  featureId: 'hero',
+  featureId: 'hero', // Value from data-slider-instance
   slideIndex: 0 // Current active slide index
 }
 ```
 
 ### Best Practices for IX3
 
-1. **Use Feature IDs**: Set `data-feature-id` for carousels you want to animate differently
-2. **Target by State**: Use `[data-state="active"]` instead of Swiper's dynamic classes
-3. **Scope Your Selectors**: Combine feature ID and state for precise targeting
-4. **Start with Canonical Events**: Use default `interaction:*` events unless you need custom ones
+1. **Enable When Needed**: Only add `data-interaction-events="true"` if you're using Webflow IX3 animations
+2. **CSS-Only Transitions**: If using only CSS transitions (no IX3), omit the `data-interaction-events` attribute to avoid unnecessary event emissions
+3. **Use Descriptive Instance Names**: Set `data-slider-instance="hero"` to identify and scope your carousels
+4. **Target by State**: Use `[data-state="active"]` instead of Swiper's dynamic classes (works with or without IX3)
+5. **Scope Your Selectors**: Combine instance name and state for precise targeting: `[data-slider-instance="hero"] [data-state="active"]`
+6. **Start with Canonical Events**: Use default `interaction:*` events unless you need custom ones
 
 ## Configuration via Data Attributes
 
