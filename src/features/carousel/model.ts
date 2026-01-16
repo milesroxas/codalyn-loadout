@@ -159,6 +159,7 @@ export function buildCarouselConfig(
     // No swiping configuration - allows preventing swipe on specific elements
     noSwiping: true,
     noSwipingClass: 'swiper-no-swiping',
+    noSwipingSelector: dataset.noSwipingSelector ?? '[data-no-swiping]',
   };
 
   const modules: SwiperModule[] = [];

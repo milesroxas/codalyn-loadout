@@ -64,6 +64,9 @@ export interface CarouselDataset {
 
   /** Custom end event name (overrides prefix) */
   interactionEventEnd?: string;
+
+  /** CSS selector for elements that should prevent swiping (e.g., '[data-no-swiping]') */
+  noSwipingSelector?: string;
 }
 
 /**

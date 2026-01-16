@@ -179,6 +179,7 @@ All configuration is done through HTML data attributes on the carousel container
 | `data-centered-slides` | boolean | `false` | Center the active slide (empty string or 'true' = true) |
 | `data-loop` | boolean | `true` | Enable loop mode (empty string or 'true' = true, 'false' = false) |
 | `data-crossfade` | boolean | `false` | Enable cross-fade for fade effect (empty string or 'true' = true) |
+| `data-no-swiping-selector` | string | `'[data-no-swiping]'` | CSS selector for elements that prevent swiping |
 
 **Example:**
 
@@ -461,7 +462,10 @@ Sometimes you need to prevent swiping on certain elements inside your slides, su
 
 ### How It Works
 
-Add the `swiper-no-swiping` class to any element where you want to disable swiping. This is automatically enabled in the carousel configuration.
+Two methods are available for preventing swipe on elements:
+
+1. **Data attribute (Recommended)**: Add `data-no-swiping` to any element - enabled by default
+2. **CSS class**: Add `swiper-no-swiping` class to any element
 
 ### Basic Usage
 
@@ -471,15 +475,32 @@ Add the `swiper-no-swiping` class to any element where you want to disable swipi
     <div class="swiper-slide">
       <img src="image1.jpg" alt="Slide 1">
 
-      <!-- Swiping is disabled on this button -->
-      <button class="swiper-no-swiping">Click Me</button>
+      <!-- Method 1: Data attribute (recommended) -->
+      <button data-no-swiping>Click Me</button>
     </div>
 
     <div class="swiper-slide">
       <img src="image2.jpg" alt="Slide 2">
 
-      <!-- Swiping is disabled on this link -->
+      <!-- Method 2: CSS class -->
       <a href="#" class="swiper-no-swiping">Learn More</a>
+    </div>
+  </div>
+</div>
+```
+
+### Custom Selector
+
+You can customize the no-swiping selector using the `data-no-swiping-selector` attribute:
+
+```html
+<div class="swiper"
+     data-slider-instance
+     data-no-swiping-selector="[data-interactive]">
+  <div class="swiper-wrapper">
+    <div class="swiper-slide">
+      <!-- Uses custom selector -->
+      <button data-interactive>Click Me</button>
     </div>
   </div>
 </div>
