@@ -33,21 +33,13 @@ declare const Webflow: WebflowGlobal | undefined;
 function resolveIX3(): IX3API | null {
   // Check if running in Webflow environment
   if (typeof Webflow === 'undefined' || typeof Webflow.require !== 'function') {
-    console.warn('[IX3] Webflow not available in this environment');
     return null;
   }
 
   try {
     const ix3 = Webflow.require('ix3');
-
-    if (!ix3) {
-      console.warn('[IX3] Webflow.require("ix3") returned undefined');
-      return null;
-    }
-
-    return ix3;
-  } catch (error) {
-    console.error('[IX3] Failed to load IX3 API:', error);
+    return ix3 || null;
+  } catch {
     return null;
   }
 }
@@ -83,7 +75,6 @@ export function emit(eventName: string, payload?: unknown): void {
   const ix3 = resolveIX3();
 
   if (!ix3) {
-    console.warn('[IX3] Cannot emit event - IX3 not available:', eventName);
     return;
   }
 
@@ -93,14 +84,10 @@ export function emit(eventName: string, payload?: unknown): void {
       ? eventName
       : `interaction:${eventName}`;
 
-    console.log('[IX3] 📤 Emitting event:', normalizedName, payload ? payload : '(no payload)');
-
     // Emit the event - IX3 will handle animation based on Webflow Designer configuration
     ix3.emit(normalizedName, payload);
-
-    console.log('[IX3] ✓ Event emitted successfully');
-  } catch (error) {
-    console.error('[IX3] ❌ Failed to emit event:', eventName, error);
+  } catch {
+    // Silently fail - IX3 errors shouldn't break the carousel
   }
 }
 
@@ -146,7 +133,6 @@ export function emitPerSlide(
   const ix3 = resolveIX3();
 
   if (!ix3) {
-    console.warn('[IX3] Cannot emit per-slide event - IX3 not available');
     return;
   }
 
@@ -168,14 +154,9 @@ export function emitPerSlide(
       ...(options.featureId && { featureId: options.featureId }),
     };
 
-    console.log('[IX3] 📤 Emitting per-slide event:', normalizedName, payload);
-
     // Emit the event
     ix3.emit(normalizedName, payload);
-
-    console.log('[IX3] ✓ Per-slide event emitted successfully');
-  } catch (error) {
-    console.error('[IX3] ❌ Failed to emit per-slide event:', error);
+  } catch {
+    // Silently fail - IX3 errors shouldn't break the carousel
   }
 }
-

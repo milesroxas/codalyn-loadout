@@ -56,20 +56,31 @@ window.Webflow.push(() => {
 
 ## Animation Approach: CSS First
 
-**Recommended**: Use CSS-based animations for slide state changes. CSS transitions and animations are more performant, easier to maintain, and work reliably with Swiper's dynamic slide updates.
+**Recommended**: Use Swiper's built-in CSS classes (`.swiper-slide-active`, `.swiper-slide-prev`, `.swiper-slide-next`) for slide state styling. These are automatically applied by Swiper and require no additional configuration.
 
-### Automatic State Markers
+### Swiper's Built-in Classes (Always Available)
 
-Each slide **always** receives a `data-state` attribute that updates as the carousel navigates:
+Swiper automatically applies these classes to slides - no configuration needed:
+
+- `.swiper-slide-active` - Currently visible slide
+- `.swiper-slide-prev` - Previous slide
+- `.swiper-slide-next` - Next slide
+- `.swiper-slide-visible` - All visible slides (when `slidesPerView > 1`)
+
+### Custom State Markers (Opt-in)
+
+When IX3 integration is enabled via `data-interaction-events="true"`, slides also receive `data-state` attributes:
 
 - `data-state="active"` - Currently visible slide
 - `data-state="prev"` - Previous slide (wraps with loop enabled)
 - `data-state="next"` - Next slide (wraps with loop enabled)
 - `data-state="inactive"` - All other slides
 
+**Note:** These custom state markers are only applied when `data-interaction-events="true"` is set on the carousel container.
+
 ### CSS-Based Animations (Recommended)
 
-Use `data-state` attributes to create smooth, performant animations:
+Use Swiper's built-in classes to create smooth, performant animations:
 
 ```css
 /* Fade in active slide */
@@ -78,7 +89,7 @@ Use `data-state` attributes to create smooth, performant animations:
   transition: opacity 0.4s ease;
 }
 
-.swiper-slide[data-state="active"] {
+.swiper-slide-active {
   opacity: 1;
 }
 
@@ -89,7 +100,7 @@ Use `data-state` attributes to create smooth, performant animations:
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.swiper-slide[data-state="active"] .slide-title {
+.swiper-slide-active .slide-title {
   transform: translateY(0);
   opacity: 1;
 }
@@ -100,7 +111,7 @@ Use `data-state` attributes to create smooth, performant animations:
 - No JavaScript overhead
 - Works reliably with Swiper's dynamic DOM updates
 - Easier to maintain and debug
-- No IX3 limitations
+- No IX3 configuration required
 
 ### IX3 Integration (Limited Use Cases)
 
@@ -159,9 +170,9 @@ In Webflow IX3:
 ### Best Practices
 
 1. **Prefer CSS**: Use CSS transitions/animations for all slide-related animations
-2. **Use IX3 Sparingly**: Only use IX3 for global carousel events or static elements
-3. **Target by State**: Use `[data-state="active"]` in CSS selectors
-4. **Scope Your Selectors**: Combine instance name and state: `[data-slider-instance="hero"] [data-state="active"]`
+2. **Use Swiper Classes**: Prefer `.swiper-slide-active` over `[data-state="active"]` as they work without IX3 enabled
+3. **Use IX3 Sparingly**: Only use IX3 for global carousel events or static elements outside the carousel
+4. **Scope Your Selectors**: Combine carousel class and state: `.my-carousel .swiper-slide-active`
 5. **Performance**: CSS animations are GPU-accelerated and more efficient than IX3
 
 ## Configuration via Data Attributes

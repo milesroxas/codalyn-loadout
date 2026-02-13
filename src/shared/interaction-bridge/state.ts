@@ -11,8 +11,6 @@
 export interface StateConfig {
   /** Attribute name to use for state markers (default: 'data-state') */
   attr?: string;
-  /** Feature ID to enable logging for (e.g., 'events') */
-  logForFeature?: string;
 }
 
 /**
@@ -56,11 +54,6 @@ export function setState(
 ): void {
   const attr = config.attr || 'data-state';
   const itemsArray = Array.from(items);
-  const shouldLog = config.logForFeature !== undefined;
-
-  if (shouldLog) {
-    console.log(`[State:${config.logForFeature}] Setting states for`, itemsArray.length, 'items:', assignment);
-  }
 
   // Clear all states from all items
   for (const item of itemsArray) {
@@ -70,39 +63,21 @@ export function setState(
   // Apply new states
   if (assignment.active !== undefined && itemsArray[assignment.active]) {
     itemsArray[assignment.active].setAttribute(attr, 'active');
-    if (shouldLog) {
-      console.log(`[State:${config.logForFeature}] ✓ Set active:`, assignment.active);
-    }
   }
 
   if (assignment.prev !== undefined && itemsArray[assignment.prev]) {
     itemsArray[assignment.prev].setAttribute(attr, 'prev');
-    if (shouldLog) {
-      console.log(`[State:${config.logForFeature}] ✓ Set prev:`, assignment.prev);
-    }
   }
 
   if (assignment.next !== undefined && itemsArray[assignment.next]) {
     itemsArray[assignment.next].setAttribute(attr, 'next');
-    if (shouldLog) {
-      console.log(`[State:${config.logForFeature}] ✓ Set next:`, assignment.next);
-    }
   }
 
   // Mark remaining items as inactive
-  // Count how many slides actually got active/prev/next states
-  const statedSlides = [assignment.active, assignment.prev, assignment.next]
-    .filter(idx => idx !== undefined).length;
-  const inactiveCount = itemsArray.length - statedSlides;
-
   for (let i = 0; i < itemsArray.length; i++) {
     if (i !== assignment.active && i !== assignment.prev && i !== assignment.next) {
       itemsArray[i].setAttribute(attr, 'inactive');
     }
-  }
-
-  if (inactiveCount > 0 && shouldLog) {
-    console.log(`[State:${config.logForFeature}] ✓ Set`, inactiveCount, 'items to inactive');
   }
 }
 
@@ -122,13 +97,9 @@ export function clearState(items: Element[] | NodeListOf<Element>, config: State
   const attr = config.attr || 'data-state';
   const itemsArray = Array.from(items);
 
-  console.log('[State] Clearing states for', itemsArray.length, 'items');
-
   for (const item of itemsArray) {
     item.removeAttribute(attr);
   }
-
-  console.log('[State] ✓ All states cleared');
 }
 
 /**

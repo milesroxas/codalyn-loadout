@@ -59,14 +59,15 @@ function calculateIndices(
 /**
  * Apply state markers to slides based on Swiper's active index
  */
-function applySlideStates(swiper: Swiper, featureId?: string): void {
+function applySlideStates(swiper: Swiper): void {
   // Get all slides from the wrapper (excludes duplicate slides in loop mode)
   const wrapper = swiper.wrapperEl;
-  const slides = wrapper ? Array.from(wrapper.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)')) : [];
+  const slides = wrapper
+    ? Array.from(wrapper.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)'))
+    : [];
 
   // Safety check for empty carousel
   if (!slides || slides.length === 0) {
-    console.warn('[Carousel] No slides found, skipping state application');
     return;
   }
 
@@ -74,23 +75,13 @@ function applySlideStates(swiper: Swiper, featureId?: string): void {
   const totalSlides = slides.length;
   const loop = swiper.params.loop || false;
 
-  const isEventsInstance = featureId === 'events';
-
-  if (isEventsInstance) {
-    console.log('[Carousel:events] Applying slide states - Current index:', realIndex, 'Total:', totalSlides, 'Loop:', loop);
-  }
-
   const { prev, next } = calculateIndices(realIndex, totalSlides, loop);
-
-  if (isEventsInstance) {
-    console.log('[Carousel:events] Calculated indices - Active:', realIndex, 'Prev:', prev, 'Next:', next);
-  }
 
   setState(slides, {
     active: realIndex,
     prev,
     next,
-  }, { logForFeature: isEventsInstance ? 'events' : undefined });
+  });
 }
 
 /**
@@ -130,42 +121,21 @@ function getEventNames(config: IX3Config): { start: string; end: string } {
  * ```
  */
 export function setupInteractionBridge(swiper: Swiper, config: IX3Config = {}): void {
-  // Only log for 'events' instance to reduce noise
-  const isEventsInstance = config.featureId === 'events';
-
-  if (isEventsInstance) {
-    console.log('[Carousel:events] Setting up interaction bridge with config:', config);
-  }
-
   // Skip if not explicitly enabled (opt-in behavior)
   if (config.enabled !== true) {
-    if (isEventsInstance) {
-      console.log('[Carousel:events] Interaction bridge not enabled - skipping event emission');
-    }
     return;
   }
 
   const eventNames = getEventNames(config);
-  if (isEventsInstance) {
-    console.log('[Carousel:events] Event names configured:', eventNames);
-  }
 
   // Apply initial state markers BEFORE init to prevent CSS transition on first slide
   // This ensures the first slide starts with data-state="active" already applied
   swiper.on('beforeInit', () => {
-    if (isEventsInstance) {
-      console.log('[Carousel:events] 🎬 Swiper before init - applying initial states');
-    }
-    applySlideStates(swiper, config.featureId);
+    applySlideStates(swiper);
   });
 
   // Emit init event after Swiper is ready
   swiper.on('init', () => {
-    if (isEventsInstance) {
-      console.log('[Carousel:events] 🎬 Swiper initialized');
-    }
-
-    // Emit init event
     emit('init', {
       featureId: config.featureId,
       type: 'carousel',
@@ -174,13 +144,9 @@ export function setupInteractionBridge(swiper: Swiper, config: IX3Config = {}): 
 
   // Update state markers when slide changes start
   swiper.on('slideChangeTransitionStart', () => {
-    if (isEventsInstance) {
-      console.log(`[Carousel:events] 🔄 Slide change transition started - Moving to slide: ${swiper.realIndex}`);
-    }
-
     // Apply the new state markers FIRST
     // This ensures the new active slide has data-state="active" before IX3 animations trigger
-    applySlideStates(swiper, config.featureId);
+    applySlideStates(swiper);
 
     // Emit event - IX3 will query for [data-state="active"] based on Webflow Designer configuration
     emit(eventNames.start, {
@@ -188,28 +154,16 @@ export function setupInteractionBridge(swiper: Swiper, config: IX3Config = {}): 
       slideIndex: swiper.realIndex,
       type: 'carousel',
     });
-
-    if (isEventsInstance) {
-      console.log(`[Carousel:events] ✓ State applied and event emitted`);
-    }
   });
 
-  // Optional: emit event when slide change ends
+  // Emit event when slide change ends
   swiper.on('slideChangeTransitionEnd', () => {
-    if (isEventsInstance) {
-      console.log('[Carousel:events] ✓ Slide change transition completed - Now at slide:', swiper.realIndex);
-    }
-
     emit(eventNames.end, {
       featureId: config.featureId,
       slideIndex: swiper.realIndex,
       type: 'carousel',
     });
   });
-
-  if (isEventsInstance) {
-    console.log('[Carousel:events] ✓ Interaction bridge setup complete');
-  }
 }
 
 /**
@@ -240,8 +194,6 @@ interface IX3Dataset {
  * @returns IX3 configuration
  */
 export function parseIX3Config(dataset: IX3Dataset): IX3Config {
-  // console.log('[Carousel] Parsing IX3 config from dataset:', dataset);
-
   const config: IX3Config = {};
 
   // Use sliderInstance as the primary feature ID
@@ -267,8 +219,6 @@ export function parseIX3Config(dataset: IX3Dataset): IX3Config {
   if (dataset.interactionEventEnd) {
     config.eventEnd = dataset.interactionEventEnd;
   }
-
-  console.log('[Carousel] Parsed IX3 config:', config);
 
   return config;
 }

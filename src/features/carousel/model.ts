@@ -53,6 +53,41 @@ function parseBreakpoints(value: string | undefined): SwiperOptions['breakpoints
 }
 
 /**
+ * Parse individual breakpoint attributes (data-breakpoint-320, data-breakpoint-640, etc.)
+ * and build a breakpoints object
+ * Supports both double quotes and single quotes for Webflow compatibility
+ */
+function parseIndividualBreakpoints(element: HTMLElement): SwiperOptions['breakpoints'] {
+  const breakpoints: SwiperOptions['breakpoints'] = {};
+  const attributes = element.attributes;
+
+  for (let i = 0; i < attributes.length; i++) {
+    const attr = attributes[i];
+    const match = attr.name.match(/^data-breakpoint-(\d+)$/);
+
+    if (match) {
+      const width = parseInt(match[1], 10);
+      const value = attr.value;
+
+      try {
+        // Convert single quotes to double quotes for JSON parsing (Webflow compatibility)
+        const normalizedValue = value.replace(/'/g, '"');
+
+        // Parse the JSON value for this breakpoint
+        const config = JSON.parse(normalizedValue);
+        if (typeof config === 'object' && config !== null) {
+          breakpoints[width] = config;
+        }
+      } catch {
+        console.warn(`Invalid breakpoint config for ${attr.name}:`, value);
+      }
+    }
+  }
+
+  return Object.keys(breakpoints).length > 0 ? breakpoints : undefined;
+}
+
+/**
  * Find element by selector or attribute
  * Supports both CSS selectors and data attribute values
  * Searches within container first, then expands to document level
@@ -187,7 +222,11 @@ export function buildCarouselConfig(
   }
 
   // Responsive breakpoints
-  const breakpoints = parseBreakpoints(dataset.breakpoints);
+  // Try JSON attribute first, then fall back to individual breakpoint attributes
+  let breakpoints = parseBreakpoints(dataset.breakpoints);
+  if (!breakpoints) {
+    breakpoints = parseIndividualBreakpoints(element);
+  }
   if (breakpoints) {
     config.breakpoints = breakpoints;
   }
