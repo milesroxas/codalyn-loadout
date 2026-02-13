@@ -74,16 +74,22 @@ Follow semantic versioning for npm packages:
 - `1.0.1` - Patch release (bug fixes)
 
 ### Creating a Release
-Bump version in package.json before pushing:
+Bump version after committing your changes:
 ```bash
-# Update version in package.json
-npm version patch  # 1.0.0 → 1.0.1
-npm version minor  # 1.0.0 → 1.1.0
-npm version major  # 1.0.0 → 2.0.0
+# 1. Stage and commit your changes first
+git add src/
+git commit -m "feat: your feature description"
 
-# Push changes (workflow will auto-publish to npm)
+# 2. Bump version (creates a separate commit automatically)
+pnpm version patch  # 1.0.0 → 1.0.1
+pnpm version minor  # 1.0.0 → 1.1.0
+pnpm version major  # 1.0.0 → 2.0.0
+
+# 3. Push changes (workflow will auto-publish to npm)
 git push origin main
 ```
+
+**Important**: You must bump the version number before publishing. npm will reject attempts to publish over existing versions.
 
 ### Branch Strategy
 - `main` - Latest stable code, auto-publishes to npm on push
@@ -118,8 +124,10 @@ git commit -m "fix: resolve mobile viewport overflow"
 3. Commit with conventional format: `git commit -m "feat: add carousel controls"`
 4. Push and create PR: `git push origin feature/carousel-controls`
 5. Merge to `main` after review
-6. Bump version if needed: `npm version patch/minor/major`
-7. Push to trigger automatic npm publish
+6. Bump version: `pnpm version patch/minor/major` (creates a commit automatically)
+7. Push to trigger automatic npm publish: `git push origin main`
+
+**Note**: Always bump the version after committing your changes. The `pnpm version` command automatically creates a new commit with the version change.
 
 ### Webflow Integration
 1. **Development sites**: Use `@latest` for auto-updates

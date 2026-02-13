@@ -90,14 +90,17 @@ pnpm dev
 # 3. Code quality check
 pnpm check:fix
 
-# 4. Commit
+# 4. Commit your changes
 git add src/
 git commit -m "feat: add breakpoint configuration to carousel"
 
-# 5. Push
+# 5. Bump version (creates a new commit)
+pnpm version patch
+
+# 6. Push
 pnpm push
 
-# 6. Wait 2-5 minutes, then test production:
+# 7. Wait 2-5 minutes, then test production:
 # https://cdn.jsdelivr.net/npm/codalyn-loadout@latest/dist/index.js
 # Hard refresh browser (Cmd+Shift+R)
 ```
@@ -189,17 +192,23 @@ pnpm push                    # dist/ is in .gitignore anyway
 ### Creating a New Release
 
 ```bash
-# Update version in package.json
-npm version patch   # 1.0.0 → 1.0.1
-npm version minor   # 1.0.0 → 1.1.0
-npm version major   # 1.0.0 → 2.0.0
+# 1. Commit your changes first
+git add src/
+git commit -m "feat: your feature description"
 
-# Push to trigger npm publish
+# 2. Bump version (creates a separate commit automatically)
+pnpm version patch   # 1.0.0 → 1.0.1
+pnpm version minor   # 1.0.0 → 1.1.0
+pnpm version major   # 1.0.0 → 2.0.0
+
+# 3. Push to trigger npm publish
 pnpm push
 
 # Update Webflow to use specific version:
 # @latest → @1.0.1
 ```
+
+**Important**: Always bump the version after committing your changes. npm will reject attempts to publish over existing versions.
 
 ### Semantic Versioning
 
