@@ -7,6 +7,7 @@
  *
  * This adapter is domain-focused and owns the mapping between Swiper's API
  * and the shared interaction bridge contract.
+ * This will be deprecated in favor of the new interaction bridge.
  */
 
 import type Swiper from 'swiper';

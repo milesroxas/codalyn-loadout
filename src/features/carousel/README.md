@@ -16,6 +16,7 @@ src/features/carousel/
 ├── types.ts      # Type definitions (derived from Swiper)
 ├── styles.css    # Carousel styles
 └── README.md     # This file
+
 ```
 
 ### Module Registration Strategy
